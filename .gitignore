@@ -1,0 +1,7 @@
+### Flask template
+instance/*
+!instance/.gitignore
+.webassets-cache
+.env
+
+/generated-requests.http
