@@ -1,12 +1,15 @@
-# 使用官方的 Python 基础镜像
-FROM python:3.8-slim
+# 使用官方的 Python Alpine 镜像
+FROM python:3.8-alpine
 
 # 设置工作目录
 WORKDIR /app
 
+# 安装必要的依赖
+RUN apk add --no-cache build-base
+
 # 复制项目的依赖文件并安装依赖
 COPY requirements.txt requirements.txt
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # 复制项目代码
 COPY . .
