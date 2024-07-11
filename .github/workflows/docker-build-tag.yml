@@ -3,10 +3,10 @@ name: Build and Push Docker Image with Tag
 on:
   push:
     branches:
-      - main
+      - master  # 当推送到 main 分支时触发
   pull_request:
     branches:
-      - main
+      - master  # 当向 main 分支提交 pull request 时触发
 
 jobs:
   build:
