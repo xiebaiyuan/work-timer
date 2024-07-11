@@ -150,6 +150,7 @@
             .then(response => response.json())
             .then(data => {
                 resultDiv.innerHTML = data.message || '时间记录成功。';
+                queryDefaultDevices();
             })
             .catch(error => {
                 console.error('Error:', error);
