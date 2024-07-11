@@ -1,18 +1,19 @@
-version: '3.7'
+version: '3'
 services:
   web:
-    image: xiebaiyuan/flask-app:0.2
-    platform: linux/amd64
+    build: .
     ports:
       - "8000:5000"
     environment:
       - FLASK_ENV=development
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - TZ=Asia/Shanghai  # 设置时区
     depends_on:
       - redis
   redis:
     image: "redis:alpine"
-    platform: linux/amd64
     ports:
       - "6379:6379"
+    environment:
+      - TZ=Asia/Shanghai  # 设置时区
