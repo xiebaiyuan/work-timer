@@ -90,8 +90,8 @@
     <div class="container">
         <h1>工作时间小助手</h1>
         <select id="deviceSelect" onchange="handleDeviceChange()">
-            <option value="胖">胖</option>
             <option value="宝">宝</option>
+            <option value="胖">胖</option>
             <option value="custom">自定义</option>
         </select>
         <input type="text" id="customDeviceInput" placeholder="设备名称" style="display:none;">
@@ -99,11 +99,11 @@
         <button onclick="queryDeviceTimes()">查询设备时间</button>
         <button onclick="queryTodayFirst()">今天已经工作了</button>
         <div class="result" id="result"></div>
-        <div class="footer">© 2024 时间管理器</div>
+        <div class="footer">© 2024 胖爱</div>
     </div>
     <div class="results-container">
-        <div class="result" id="resultPan"></div>
         <div class="result" id="resultBao"></div>
+        <div class="result" id="resultPan"></div>
     </div>
 </div>
 
@@ -207,8 +207,8 @@
     }
 
     function queryDefaultDevices() {
-        queryTodayFirstForDevice('胖', 'resultPan');
         queryTodayFirstForDevice('宝', 'resultBao');
+        queryTodayFirstForDevice('胖', 'resultPan');
     }
 
     function queryTodayFirstForDevice(deviceName, resultElementId) {
