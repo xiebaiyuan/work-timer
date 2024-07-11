@@ -3,10 +3,10 @@ name: Build and Push Docker Image with Tag
 on:
   push:
     branches:
-      - master  # 当推送到 main 分支时触发
+      - master  # 当推送到 master 分支时触发
   pull_request:
     branches:
-      - master  # 当向 main 分支提交 pull request 时触发
+      - master  # 当向 master 分支提交 pull request 时触发
 
 jobs:
   build:
@@ -28,7 +28,11 @@ jobs:
       - name: Extract version from git
         id: extract_version
         run: |
-          VERSION=$(git describe --tags --always --dirty)
+          VERSION=$(git describe --tags --abbrev=0)
+          if [ -z "$VERSION" ]; then
+            echo "No tags found, using commit id"
+            VERSION=$(git rev-parse --short HEAD)
+          fi
           echo ::set-output name=VERSION::$VERSION
 
       - name: Build and push Docker multi-arch image
