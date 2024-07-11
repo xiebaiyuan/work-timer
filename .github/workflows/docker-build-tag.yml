@@ -36,7 +36,7 @@ jobs:
         with:
           context: .
           push: true
-          platforms: linux/amd64,linux/arm64,darwin/amd64
+          platforms: linux/amd64,linux/arm64
           tags: |
             xiebaiyuan/work-timer:${{ steps.extract_version.outputs.VERSION }}
             xiebaiyuan/work-timer:latest

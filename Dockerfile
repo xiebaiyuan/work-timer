@@ -1,5 +1,5 @@
 # 使用官方的 Python Alpine 镜像
-FROM python:3.8-alpine
+FROM python:3.12.4-alpine
 
 # 设置工作目录
 WORKDIR /app
