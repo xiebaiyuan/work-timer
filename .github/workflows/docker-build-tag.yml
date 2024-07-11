@@ -28,11 +28,8 @@ jobs:
       - name: Extract version from git
         id: extract_version
         run: |
-          VERSION=$(git describe --tags --abbrev=0)
-          if [ -z "$VERSION" ]; then
-            echo "No tags found, using commit id"
-            VERSION=$(git rev-parse --short HEAD)
-          fi
+          VERSION=$(git describe --tags --always || git rev-parse --short HEAD)
+          echo "VERSION=${VERSION}"
           echo ::set-output name=VERSION::$VERSION
 
       - name: Build and push Docker multi-arch image
