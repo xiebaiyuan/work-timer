@@ -132,7 +132,7 @@
 <div id="editModal">
     <div id="editModalContent">
         <h2>修改时间戳</h2>
-        <input type="datetime-local" id="newTimestamp" required>
+        <input type="datetime-local" id="newTimestamp" step="1" required>
         <br>
         <button class="confirm" onclick="updateRecord()">确认</button>
         <button class="cancel" onclick="closeEditModal()">取消</button>
@@ -212,7 +212,7 @@
         const modal = document.getElementById('editModal');
         const newTimestampInput = document.getElementById('newTimestamp');
         const localDate = new Date(currentTimestamp);
-        const localISOTime = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+        const localISOTime = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000)).toISOString().slice(0, 19);
         newTimestampInput.value = localISOTime;
         modal.style.display = 'block';
     }
