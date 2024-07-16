@@ -108,7 +108,6 @@
         <input type="text" id="customDeviceInput" placeholder="设备名称" style="display:none;">
         <button onclick="saveCurrentTime()">记录当前时间</button>
         <button onclick="queryDeviceTimes()">查询设备时间</button>
-        <button onclick="queryTodayFirst()">今天已经工作了</button>
         <button onclick="navigateToEditPage()">编辑页面</button>
         <div class="result" id="result"></div>
         <div class="footer">© 2024 胖爱</div>
@@ -169,7 +168,7 @@
             .then(response => response.json())
             .then(data => {
                 resultDiv.innerHTML = data.message || '时间记录成功。';
-                queryTodayFirstForDevice(deviceName, deviceName === '宝' ? 'resultBao' : 'resultPan');
+                queryDefaultDevices();
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -259,6 +258,11 @@
 
     function updateElapsedTime(resultElementId, firstTimestamp) {
         const resultDiv = document.getElementById(resultElementId);
+        if (!resultDiv) {
+            console.error(`Element with id ${resultElementId} not found.`);
+            return;
+        }
+
         const now = new Date();
         const elapsed = now - new Date(firstTimestamp);
 
