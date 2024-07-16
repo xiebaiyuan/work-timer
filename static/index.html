@@ -16,12 +16,14 @@
             padding: 20px;
             box-sizing: border-box;
         }
+
         .main-container {
             display: flex;
             justify-content: space-between;
             width: 100%;
             max-width: 900px;
         }
+
         .container {
             background-color: #fff;
             padding: 30px;
@@ -31,6 +33,7 @@
             width: 100%;
             margin-right: 20px;
         }
+
         .results-container {
             background-color: #fff;
             padding: 30px;
@@ -39,11 +42,13 @@
             max-width: 400px;
             width: 100%;
         }
+
         h1 {
             font-size: 24px;
             color: #333;
             margin-bottom: 20px;
         }
+
         input[type="text"], select {
             width: calc(100% - 20px);
             padding: 10px;
@@ -52,6 +57,7 @@
             border-radius: 5px;
             font-size: 16px;
         }
+
         button {
             width: calc(100% - 20px);
             padding: 12px;
@@ -64,9 +70,11 @@
             color: white;
             transition: background-color 0.3s ease;
         }
+
         button:hover {
             background-color: #45a049;
         }
+
         .result {
             margin-top: 20px;
             font-size: 18px;
@@ -76,10 +84,15 @@
             border-radius: 5px;
             box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
         }
+
         .footer {
             margin-top: 20px;
             font-size: 14px;
             color: #777;
+        }
+
+        .time-info {
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -103,10 +116,17 @@
     <div class="results-container">
         <div class="result" id="resultBao"></div>
         <div class="result" id="resultPan"></div>
+        <div class="time-info">
+            <p id="currentTime"></p>
+            <p id="targetTime"></p>
+            <p id="countdown"></p>
+        </div>
     </div>
 </div>
 
 <script>
+    let firstTimestamp = null;
+
     function handleDeviceChange() {
         const deviceSelect = document.getElementById('deviceSelect');
         const customDeviceInput = document.getElementById('customDeviceInput');
@@ -137,7 +157,7 @@
         }
 
         const currentTime = new Date().toISOString();
-        const data = { device_name: deviceName, timestamp: currentTime };
+        const data = {device_name: deviceName, timestamp: currentTime};
 
         fetch('/save', {
             method: 'POST',
@@ -196,7 +216,9 @@
                 if (data.error) {
                     resultDiv.innerHTML = data.error;
                 } else {
-                    resultDiv.innerHTML = `今天已经工作了：${data.elapsed_time}`;
+                    firstTimestamp = new Date(data.first_timestamp);
+                    updateElapsedTime();
+                    setInterval(updateElapsedTime, 1000); // 每秒更新一次
                 }
             })
             .catch(error => {
@@ -219,7 +241,10 @@
                 if (data.error) {
                     resultDiv.innerHTML = `${deviceName} - 尚未记录`;
                 } else {
-                    resultDiv.innerHTML = `${deviceName} 今天已经工作了：${data.elapsed_time}`;
+                    const firstTimestamp = new Date(data.first_timestamp);
+                    resultDiv.dataset.firstTimestamp = firstTimestamp; // 存储最早时间戳
+                    updateElapsedTime(resultElementId, firstTimestamp); // 更新初始时间
+                    setInterval(() => updateElapsedTime(resultElementId, firstTimestamp), 1000); // 每秒更新一次
                 }
             })
             .catch(error => {
@@ -230,6 +255,18 @@
 
     function navigateToEditPage() {
         window.location.href = '/edit';
+    }
+
+    function updateElapsedTime(resultElementId, firstTimestamp) {
+        const resultDiv = document.getElementById(resultElementId);
+        const now = new Date();
+        const elapsed = now - new Date(firstTimestamp);
+
+        const hours = Math.floor(elapsed / (1000 * 60 * 60));
+        const minutes = Math.floor((elapsed % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((elapsed % (1000 * 60)) / 1000);
+
+        resultDiv.innerHTML = `${resultDiv.id.includes('Bao') ? '宝' : '胖'} 今天已经工作了：${hours}小时 ${minutes}分钟 ${seconds}秒`;
     }
 
     document.addEventListener('DOMContentLoaded', queryDefaultDevices);
