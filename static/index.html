@@ -157,7 +157,7 @@
         }
 
         const currentTime = new Date().toISOString();
-        const data = {device_name: deviceName, timestamp: currentTime};
+        const data = { device_name: deviceName, timestamp: currentTime };
 
         fetch('/save', {
             method: 'POST',
@@ -169,14 +169,13 @@
             .then(response => response.json())
             .then(data => {
                 resultDiv.innerHTML = data.message || '时间记录成功。';
-                queryDefaultDevices();
+                queryTodayFirstForDevice(deviceName, deviceName === '宝' ? 'resultBao' : 'resultPan');
             })
             .catch(error => {
                 console.error('Error:', error);
                 resultDiv.innerHTML = '时间记录失败。';
             });
     }
-
     function queryDeviceTimes() {
         const deviceName = getDeviceName();
         const resultDiv = document.getElementById('result');
@@ -244,7 +243,8 @@
                     const firstTimestamp = new Date(data.first_timestamp);
                     resultDiv.dataset.firstTimestamp = firstTimestamp; // 存储最早时间戳
                     updateElapsedTime(resultElementId, firstTimestamp); // 更新初始时间
-                    setInterval(() => updateElapsedTime(resultElementId, firstTimestamp), 1000); // 每秒更新一次
+                    if (resultDiv.interval) clearInterval(resultDiv.interval); // 清除以前的定时器
+                    resultDiv.interval = setInterval(() => updateElapsedTime(resultElementId, firstTimestamp), 1000); // 每秒更新一次
                 }
             })
             .catch(error => {
