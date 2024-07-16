@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory, render_template
+from flask import Flask, request, jsonify, send_from_directory
 import redis
 import os
 from datetime import datetime, timedelta
@@ -18,9 +18,9 @@ def index():
     return send_from_directory('static', 'index.html')
 
 
-@app.route('/deletepage')
+@app.route('/edit')
 def delete_page():
-    return send_from_directory('static', 'delete_record.html')
+    return send_from_directory('static', 'edit_record.html')
 
 
 @app.route('/save', methods=['POST'])
@@ -113,7 +113,6 @@ def delete_device_record():
     if not device_name or not timestamp:
         return jsonify({'error': 'Invalid input'}), 400
 
-    # 直接使用UTC时间戳进行删除
     try:
         # 删除 Redis 中的指定记录
         result = redis_db.lrem(device_name, 1, timestamp)
@@ -121,6 +120,30 @@ def delete_device_record():
             return jsonify({'error': 'Record not found or already deleted'}), 404
 
         return jsonify({'message': 'Record deleted successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/update', methods=['POST'])
+def update_device_record():
+    data = request.json
+    device_name = data.get('device_name')
+    old_timestamp = data.get('old_timestamp')
+    new_timestamp = data.get('new_timestamp')
+
+    if not device_name or not old_timestamp or not new_timestamp:
+        return jsonify({'error': 'Invalid input'}), 400
+
+    try:
+        # 删除旧记录
+        result = redis_db.lrem(device_name, 1, old_timestamp)
+        if result == 0:
+            return jsonify({'error': 'Old record not found'}), 404
+
+        # 添加新记录
+        redis_db.rpush(device_name, new_timestamp)
+
+        return jsonify({'message': 'Record updated successfully'}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -141,9 +164,6 @@ def get_timestamps():
 
     # 从 Redis 查询设备的所有时间戳
     timestamps = redis_db.lrange(device_name, 0, -1)
-    current_tz = tz.tzlocal()
-    formatted_timestamps = [parser.parse(ts).astimezone(current_tz).strftime('%Y-%m-%d %H:%M:%S') for ts in timestamps]
-
     return jsonify({'timestamps': timestamps}), 200
 
 

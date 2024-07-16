@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>删除设备记录</title>
+    <title>修改设备记录</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -30,7 +30,7 @@
             margin-top: 10px;
             color: #555;
         }
-        select, button {
+        select, input, button {
             width: 100%;
             padding: 10px;
             margin-top: 10px;
@@ -62,6 +62,50 @@
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+        #editModal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+        #editModalContent {
+            background-color: #fff;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 400px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        #editModal input {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #editModal button {
+            width: calc(45% - 10px);
+            padding: 10px;
+            margin: 10px 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #editModal .confirm {
+            background-color: #28a745;
+            color: #fff;
+        }
+        #editModal .cancel {
+            background-color: #dc3545;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
@@ -79,12 +123,25 @@
         </select><br><br>
 
         <button type="submit">删除记录</button>
+        <button type="button" onclick="showEditModal()">修改记录</button>
     </form>
 
     <p id="responseMessage"></p>
 </div>
 
+<div id="editModal">
+    <div id="editModalContent">
+        <h2>修改时间戳</h2>
+        <input type="datetime-local" id="newTimestamp" required>
+        <br>
+        <button class="confirm" onclick="updateRecord()">确认</button>
+        <button class="cancel" onclick="closeEditModal()">取消</button>
+    </div>
+</div>
+
 <script>
+    let currentTimestamp = '';
+
     // 从服务器获取设备列表
     fetch('/get_devices')
         .then(response => response.json())
@@ -120,27 +177,79 @@
         }
     });
 
+    // 当时间戳选择变化时，设置当前时间戳
+    document.getElementById('timestamp_select').addEventListener('change', function() {
+        currentTimestamp = this.value;
+    });
+
     // 表单提交处理
     document.getElementById('deleteForm').addEventListener('submit', function(event) {
         event.preventDefault();
 
         const deviceName = document.getElementById('device_select').value;
-        const timestamp = document.getElementById('timestamp_select').value;
 
         fetch('/delete', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ device_name: deviceName, timestamp: timestamp })
+            body: JSON.stringify({ device_name: deviceName, timestamp: currentTimestamp })
         })
             .then(response => response.json())
             .then(data => {
                 const responseMessage = document.getElementById('responseMessage');
                 responseMessage.textContent = data.message || data.error;
                 responseMessage.className = data.message ? 'success' : 'error';
+                document.getElementById('device_select').dispatchEvent(new Event('change')); // 刷新时间戳列表
             });
     });
+
+    function showEditModal() {
+        if (!currentTimestamp) {
+            alert('请选择时间戳');
+            return;
+        }
+        const modal = document.getElementById('editModal');
+        const newTimestampInput = document.getElementById('newTimestamp');
+        const localDate = new Date(currentTimestamp);
+        const localISOTime = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+        newTimestampInput.value = localISOTime;
+        modal.style.display = 'block';
+    }
+
+    function closeEditModal() {
+        const modal = document.getElementById('editModal');
+        modal.style.display = 'none';
+    }
+
+    function updateRecord() {
+        const deviceName = document.getElementById('device_select').value;
+        const oldTimestamp = currentTimestamp;
+        const newTimestamp = document.getElementById('newTimestamp').value;
+
+        if (!newTimestamp) {
+            alert('请选择新的时间戳');
+            return;
+        }
+
+        const newTimestampUTC = new Date(newTimestamp).toISOString();
+
+        fetch('/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ device_name: deviceName, old_timestamp: oldTimestamp, new_timestamp: newTimestampUTC })
+        })
+            .then(response => response.json())
+            .then(data => {
+                const responseMessage = document.getElementById('responseMessage');
+                responseMessage.textContent = data.message || data.error;
+                responseMessage.className = data.message ? 'success' : 'error';
+                closeEditModal();
+                document.getElementById('device_select').dispatchEvent(new Event('change')); // 刷新时间戳列表
+            });
+    }
 </script>
 </body>
 </html>
