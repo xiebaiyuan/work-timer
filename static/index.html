@@ -108,6 +108,7 @@
         <input type="text" id="customDeviceInput" placeholder="设备名称" style="display:none;">
         <button onclick="saveCurrentTime()">记录当前时间</button>
         <button onclick="queryDeviceTimes()">查询设备时间</button>
+        <button onclick="queryTodayFirst()">今天已经工作了</button>
         <button onclick="navigateToEditPage()">编辑页面</button>
         <div class="result" id="result"></div>
         <div class="footer">© 2024 胖爱</div>
@@ -190,7 +191,7 @@
                 if (data.error) {
                     resultDiv.innerHTML = data.error;
                 } else {
-                    resultDiv.innerHTML = `设备 ${deviceName} 的记录时间：<br>${data.timestamps.join('<br>')}<br>今天最早的记录时间：${data.today_first_timestamp}<br>到现在已经过了：${data.elapsed_time}`;
+                    resultDiv.innerHTML = `设备 ${deviceName} 的记录时间：<br>${data.timestamps.join('<br>')}<br>今天最早的记录时间：${data.today_first_timestamp}<br>到现在已经过了：${data.elapsed_time} `;
                 }
             })
             .catch(error => {
@@ -214,9 +215,8 @@
                 if (data.error) {
                     resultDiv.innerHTML = data.error;
                 } else {
-                    firstTimestamp = new Date(data.first_timestamp);
-                    updateElapsedTime();
-                    setInterval(updateElapsedTime, 1000); // 每秒更新一次
+                    resultDiv.innerHTML = `${deviceName} 今天已经工作了：${data.elapsed_time}`;
+                    queryDefaultDevices()
                 }
             })
             .catch(error => {
@@ -239,11 +239,7 @@
                 if (data.error) {
                     resultDiv.innerHTML = `${deviceName} - 尚未记录`;
                 } else {
-                    const firstTimestamp = new Date(data.first_timestamp);
-                    resultDiv.dataset.firstTimestamp = firstTimestamp; // 存储最早时间戳
-                    updateElapsedTime(resultElementId, firstTimestamp); // 更新初始时间
-                    if (resultDiv.interval) clearInterval(resultDiv.interval); // 清除以前的定时器
-                    resultDiv.interval = setInterval(() => updateElapsedTime(resultElementId, firstTimestamp), 1000); // 每秒更新一次
+                    resultDiv.innerHTML = `${deviceName} 今天已经工作了：${data.elapsed_time}`;
                 }
             })
             .catch(error => {
