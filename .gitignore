@@ -5,3 +5,4 @@ instance/*
 .env
 
 /generated-requests.http
+.DS_Store
