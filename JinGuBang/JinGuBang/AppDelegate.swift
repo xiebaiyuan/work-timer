@@ -40,10 +40,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 //            }
 //        }
 //    }
-    
+    ////////////////////////////////////////////////////////////////
     @objc func togglePopover() {
         if let button = statusItem?.button {
-            // 点击状态栏时发送通知
+            // 点击状态栏时发送请求获取最新签到时间
+            fetchAPIData()
             sendNotification()
         }
     }
@@ -77,7 +78,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             popover.performClose(nil)
         }
     }
-
+    
+    // 停止定时器
+    func stopTimer() {
+        timer?.invalidate()
+        timer = nil
+    }
+    
     // 发送网络请求获取状态并更新状态栏
     @objc func fetchAPIData() {
         let configuration = URLSessionConfiguration.default
@@ -85,7 +92,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         configuration.waitsForConnectivity = true
         
         let session = URLSession(configuration: configuration)
-        let url = URL(string: "https://timer.xiebaiyuan.com:45456/query?device_name=%E5%AE%9D")!
+        let url = URL(string: "https://timer.xiebaiyuan.com:45456/query?device_name=%E8%83%96")!
         
         let task = session.dataTask(with: url) { [weak self] data, response, error in
             guard let self = self else { return }
@@ -108,6 +115,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
                         DispatchQueue.main.async {
                             if let first_timestamp = jsonObject["today_first_timestamp"] as? String {
                                 self.targetDate = self.dateFromString(first_timestamp)
+                                self.stopTimer()
                                 self.startTimer() // 启动定时器，定期更新状态栏时间
                             }
                         }
