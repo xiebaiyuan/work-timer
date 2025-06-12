@@ -1,5 +1,5 @@
 # requirements.txt
-Flask==2.0.1
-Werkzeug==2.0.1
-redis==4.0.2
-python-dateutil==2.8.2
+flask
+redis
+python-dateutil
+flask-cors

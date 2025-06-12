@@ -3,8 +3,23 @@ import redis
 import os
 from datetime import datetime, timedelta
 from dateutil import parser, tz
+from flask_cors import CORS
+import re
 
 app = Flask(__name__)
+
+# 自定义CORS处理
+@app.after_request
+def add_cors_headers(response):
+    origin = request.headers.get('Origin')
+    # 更精确地匹配xiebaiyuan的主域和子域
+    if origin and (re.match(r'https?://([^.]+\.)*xiebaiyuan\.[^.]+', origin) or 
+                  origin in ['http://allowed-domain.com', 'http://localhost:3000']):
+        response.headers.add('Access-Control-Allow-Origin', origin)
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
 
 # 配置 Redis
 redis_host = os.getenv('REDIS_HOST', 'redis')
@@ -86,9 +101,6 @@ def query_today_first():
     timestamps = redis_db.lrange(device_name, 0, -1)
     today_timestamps = [parser.parse(ts).astimezone(current_tz) for ts in timestamps if
                         today_start <= parser.parse(ts).astimezone(current_tz) < today_start + timedelta(days=1)]
-    
-    # 更简单的时间， 只有小时和分钟
-    simple_today_timestamps = [ts.strftime('%H:%M') for ts in today_timestamps]
 
     if not today_timestamps:
         return jsonify({'message': 'No records for today'}), 404
@@ -101,7 +113,7 @@ def query_today_first():
     # 返回最早记录的时间和已过时间
     response = {
         'first_timestamp': first_timestamp.strftime('%Y-%m-%d %H:%M:%S'),
-        'simple_today_timestamps': simple_today_timestamps,
+        'simple_today_timestamps': first_timestamp.strftime('%H:%M'),
         'elapsed_time': elapsed_time_str,
     }
 
