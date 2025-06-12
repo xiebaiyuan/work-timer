@@ -86,6 +86,9 @@ def query_today_first():
     timestamps = redis_db.lrange(device_name, 0, -1)
     today_timestamps = [parser.parse(ts).astimezone(current_tz) for ts in timestamps if
                         today_start <= parser.parse(ts).astimezone(current_tz) < today_start + timedelta(days=1)]
+    
+    # 更简单的时间， 只有小时和分钟
+    simple_today_timestamps = [ts.strftime('%H:%M') for ts in today_timestamps]
 
     if not today_timestamps:
         return jsonify({'message': 'No records for today'}), 404
@@ -98,7 +101,8 @@ def query_today_first():
     # 返回最早记录的时间和已过时间
     response = {
         'first_timestamp': first_timestamp.strftime('%Y-%m-%d %H:%M:%S'),
-        'elapsed_time': elapsed_time_str
+        'simple_today_timestamps': simple_today_timestamps,
+        'elapsed_time': elapsed_time_str,
     }
 
     return jsonify(response), 200

@@ -1,4 +1,5 @@
 import Cocoa
+import Foundation
 
 @main
 class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
