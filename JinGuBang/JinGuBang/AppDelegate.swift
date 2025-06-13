@@ -93,7 +93,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         configuration.waitsForConnectivity = true
         
         let session = URLSession(configuration: configuration)
-        let url = URL(string: "https://timer.xiebaiyuan.com:45456/query?device_name=%E8%83%96")!
+        let url = URL(string: "https://url.com:1234/query?device_name=%E8%83%96")!
         
         let task = session.dataTask(with: url) { [weak self] data, response, error in
             guard let self = self else { return }
