@@ -183,5 +183,55 @@ def get_timestamps():
     return jsonify({'timestamps': timestamps}), 200
 
 
+@app.route('/badge', methods=['GET'])
+def get_badge():
+    device_name = request.args.get('device_name')
+    
+    if not device_name:
+        return jsonify({
+            "schemaVersion": 1,
+            "label": " ",
+            "message": "缺少设备名称",
+            "color": "1ea54c55",
+            "style": "flat-square",
+            "isError": True
+        }), 400
+    
+    # 获取当前日期的起始时间和结束时间
+    current_tz = tz.tzlocal()
+    now = datetime.now(current_tz)
+    today_start = datetime(now.year, now.month, now.day, tzinfo=current_tz)
+    
+    # 从 Redis 查询数据
+    timestamps = redis_db.lrange(device_name, 0, -1)
+    today_timestamps = [parser.parse(ts).astimezone(current_tz) for ts in timestamps if
+                       today_start <= parser.parse(ts).astimezone(current_tz) < today_start + timedelta(days=1)]
+    
+    # 准备返回数据
+    badge_data = {
+        "schemaVersion": 1,
+        "label": " " ,
+    }
+    
+    if not today_timestamps:
+        # 如果今天没有记录
+        badge_data["message"] = "尚未签到"
+        badge_data["color"] = "#1ea54c55"  # 使用提供的浅色
+        badge_data["style"] = "flat-square"  # 使用较深的绿色
+    else:
+        # 获取今天最早的记录
+        first_timestamp = min(today_timestamps)
+        elapsed_time = now - first_timestamp
+        
+        # 格式化为简单的时间格式
+        time_message = first_timestamp.strftime('%H:%M')
+        
+        # 配置徽章数据
+        badge_data["message"] = time_message
+        badge_data["color"] = "#1ea54c55"  # 使用较深的绿色
+        badge_data["style"] = "flat-square"  # 使用较深的绿色
+    
+    return jsonify(badge_data)
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
