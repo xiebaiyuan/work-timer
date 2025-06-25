@@ -106,9 +106,18 @@
             <option value="custom">自定义</option>
         </select>
         <input type="text" id="customDeviceInput" placeholder="设备名称" style="display:none;">
+        <select id="tagSelect">
+            <option value="签到">签到</option>
+            <option value="下班">下班</option>
+            <option value="午休">午休</option>
+            <option value="外出">外出</option>
+            <option value="会议">会议</option>
+            <option value="培训">培训</option>
+        </select>
         <button onclick="saveCurrentTime()">记录当前时间</button>
         <button onclick="queryDeviceTimes()">查询设备时间</button>
         <button onclick="queryTodayFirst()">今天已经工作了</button>
+        <button onclick="queryByTag()">按标记查询</button>
         <button onclick="navigateToEditPage()">编辑页面</button>
         <div class="result" id="result"></div>
         <div class="footer">© 2024 胖爱</div>
@@ -149,6 +158,8 @@
 
     function saveCurrentTime() {
         const deviceName = getDeviceName();
+        const tagSelect = document.getElementById('tagSelect');
+        const tag = tagSelect.value;
         const resultDiv = document.getElementById('result');
 
         if (!deviceName) {
@@ -156,8 +167,7 @@
             return;
         }
 
-        const currentTime = new Date().toISOString();
-        const data = { device_name: deviceName, timestamp: currentTime };
+        const data = { device_name: deviceName, tag: tag };
 
         fetch('/save', {
             method: 'POST',
@@ -168,7 +178,7 @@
         })
             .then(response => response.json())
             .then(data => {
-                resultDiv.innerHTML = data.message || '时间记录成功。';
+                resultDiv.innerHTML = `时间记录成功，标记为：${data.tag}`;
                 queryDefaultDevices();
             })
             .catch(error => {
@@ -191,7 +201,12 @@
                 if (data.error) {
                     resultDiv.innerHTML = data.error;
                 } else {
-                    resultDiv.innerHTML = `设备 ${deviceName} 的记录时间：<br>${data.timestamps.join('<br>')}<br>今天最早的记录时间：${data.today_first_timestamp}<br>到现在已经过了：${data.elapsed_time} `;
+                    let recordsHtml = `设备 ${deviceName} 的记录：<br>`;
+                    data.records.forEach(record => {
+                        recordsHtml += `${record.timestamp} (${record.tag})<br>`;
+                    });
+                    recordsHtml += `<br>今天最早的记录：${data.today_first_timestamp} (${data.today_first_tag})<br>到现在已经过了：${data.elapsed_time}`;
+                    resultDiv.innerHTML = recordsHtml;
                 }
             })
             .catch(error => {
@@ -225,6 +240,36 @@
             });
     }
 
+    function queryByTag() {
+        const deviceName = getDeviceName();
+        const tagSelect = document.getElementById('tagSelect');
+        const tag = tagSelect.value;
+        const resultDiv = document.getElementById('result');
+
+        if (!deviceName) {
+            resultDiv.innerHTML = '请输入设备名称。';
+            return;
+        }
+
+        fetch(`/query_by_tag?device_name=${encodeURIComponent(deviceName)}&tag=${encodeURIComponent(tag)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    resultDiv.innerHTML = data.error;
+                } else {
+                    let recordsHtml = `设备 ${deviceName} 标记为 "${tag}" 的记录（共${data.total}条）：<br>`;
+                    data.records.forEach(record => {
+                        recordsHtml += `${record.timestamp} (${record.tag})<br>`;
+                    });
+                    resultDiv.innerHTML = recordsHtml;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultDiv.innerHTML = '查询失败。';
+            });
+    }
+
     function queryDefaultDevices() {
         queryTodayFirstForDevice('宝', 'resultBao');
         queryTodayFirstForDevice('胖', 'resultPan');
@@ -239,7 +284,7 @@
                 if (data.error) {
                     resultDiv.innerHTML = `${deviceName} - 尚未记录`;
                 } else {
-                    resultDiv.innerHTML = `${deviceName} 今天已经工作了：${data.elapsed_time}`;
+                    resultDiv.innerHTML = `${deviceName} 今天工作了：${data.elapsed_time}<br>首次记录：${data.simple_today_timestamps} (${data.first_tag})`;
                 }
             })
             .catch(error => {

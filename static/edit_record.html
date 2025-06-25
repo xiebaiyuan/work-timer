@@ -83,7 +83,7 @@
             border-radius: 8px;
             text-align: center;
         }
-        #editModal input {
+        #editModal input, #editModal select {
             width: calc(100% - 20px);
             padding: 10px;
             margin-top: 10px;
@@ -122,6 +122,9 @@
             <option value="">请选择时间戳</option>
         </select><br><br>
 
+        <label for="tag_info">当前标记:</label>
+        <span id="tag_info">-</span><br><br>
+
         <button type="submit">删除记录</button>
         <button type="button" onclick="showEditModal()">修改记录</button>
     </form>
@@ -131,8 +134,19 @@
 
 <div id="editModal">
     <div id="editModalContent">
-        <h2>修改时间戳</h2>
+        <h2>修改记录</h2>
+        <label for="newTimestamp">新时间:</label>
         <input type="datetime-local" id="newTimestamp" step="1" required>
+        <br>
+        <label for="newTag">新标记:</label>
+        <select id="newTag" required>
+            <option value="签到">签到</option>
+            <option value="下班">下班</option>
+            <option value="午休">午休</option>
+            <option value="外出">外出</option>
+            <option value="会议">会议</option>
+            <option value="培训">培训</option>
+        </select>
         <br>
         <button class="confirm" onclick="updateRecord()">确认</button>
         <button class="cancel" onclick="closeEditModal()">取消</button>
@@ -164,11 +178,12 @@
                 .then(data => {
                     const timestampSelect = document.getElementById('timestamp_select');
                     timestampSelect.innerHTML = '<option value="">请选择时间戳</option>'; // 重置时间戳选项
-                    data.timestamps.forEach(timestamp => {
+                    data.records.forEach(record => {
                         const option = document.createElement('option');
-                        option.value = timestamp;
-                        const localTime = new Date(timestamp).toLocaleString();
-                        option.textContent = localTime;
+                        option.value = record.raw_record;
+                        option.dataset.tag = record.tag;
+                        const localTime = new Date(record.timestamp).toLocaleString();
+                        option.textContent = `${localTime} (${record.tag})`;
                         timestampSelect.appendChild(option);
                     });
                 });
@@ -177,9 +192,12 @@
         }
     });
 
-    // 当时间戳选择变化时，设置当前时间戳
+    // 当时间戳选择变化时，设置当前时间戳和显示标记
     document.getElementById('timestamp_select').addEventListener('change', function() {
         currentTimestamp = this.value;
+        const selectedOption = this.options[this.selectedIndex];
+        const tag = selectedOption.dataset.tag || '-';
+        document.getElementById('tag_info').textContent = tag;
     });
 
     // 表单提交处理
@@ -211,9 +229,23 @@
         }
         const modal = document.getElementById('editModal');
         const newTimestampInput = document.getElementById('newTimestamp');
-        const localDate = new Date(currentTimestamp);
-        const localISOTime = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000)).toISOString().slice(0, 19);
-        newTimestampInput.value = localISOTime;
+        const newTagSelect = document.getElementById('newTag');
+        
+        // 解析当前记录
+        try {
+            const record = JSON.parse(currentTimestamp);
+            const localDate = new Date(record.timestamp);
+            const localISOTime = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000)).toISOString().slice(0, 19);
+            newTimestampInput.value = localISOTime;
+            newTagSelect.value = record.tag || '签到';
+        } catch (e) {
+            // 旧格式处理
+            const localDate = new Date(currentTimestamp);
+            const localISOTime = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000)).toISOString().slice(0, 19);
+            newTimestampInput.value = localISOTime;
+            newTagSelect.value = '签到';
+        }
+        
         modal.style.display = 'block';
     }
 
@@ -226,6 +258,7 @@
         const deviceName = document.getElementById('device_select').value;
         const oldTimestamp = currentTimestamp;
         const newTimestamp = document.getElementById('newTimestamp').value;
+        const newTag = document.getElementById('newTag').value;
 
         if (!newTimestamp) {
             alert('请选择新的时间戳');
@@ -239,7 +272,12 @@
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ device_name: deviceName, old_timestamp: oldTimestamp, new_timestamp: newTimestampUTC })
+            body: JSON.stringify({ 
+                device_name: deviceName, 
+                old_timestamp: oldTimestamp, 
+                new_timestamp: newTimestampUTC,
+                new_tag: newTag
+            })
         })
             .then(response => response.json())
             .then(data => {
