@@ -17,3 +17,6 @@ services:
       - "6379:6379"
     environment:
       - TZ=Asia/Shanghai  # 设置时区
+    volumes:
+      - ./redis-data:/data  # 挂载Redis数据目录到本地
+    command: redis-server --appendonly yes  # 启用AOF持久化

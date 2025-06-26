@@ -6,3 +6,6 @@ instance/*
 
 /generated-requests.http
 .DS_Store
+
+# Redis数据持久化目录
+redis-data/
