@@ -712,7 +712,7 @@
                 if (data.error || data.message === 'No records for today') {
                     resultDiv.className = 'status-card no-record';
                     resultDiv.innerHTML = `
-                        <h3>📱 ${deviceName}</h3>
+                        <h3>${deviceName}</h3>
                         <p>🚫 今日尚未签到</p>
                         <small>等待第一次记录...</small>
                     `;
@@ -746,7 +746,7 @@
                     
                     resultDiv.className = isOffWork ? 'status-card off-work' : 'status-card working';
                     resultDiv.innerHTML = `
-                        <h3>📱 ${deviceName}</h3>
+                        <h3>${deviceName}</h3>
                         <div style="font-size: 24px; font-weight: 600; color: ${isOffWork ? 'var(--success-color)' : 'var(--warning-color)'}; margin: 10px 0;">
                             已工作: ${displayTime}
                         </div>
@@ -792,7 +792,7 @@
                 console.error('Error:', error);
                 resultDiv.className = 'status-card no-record';
                 resultDiv.innerHTML = `
-                    <h3>📱 ${deviceName}</h3>
+                    <h3>${deviceName}</h3>
                     <p>❌ 查询失败</p>
                     <small>请检查网络连接</small>
                 `;
