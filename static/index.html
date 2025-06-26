@@ -5,131 +5,328 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>工作时间小助手</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            height: 100vh;
+        :root {
+            --primary-color: #667eea;
+            --primary-hover: #5a6fd8;
+            --secondary-color: #764ba2;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --card-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+        }
+
+        * {
             margin: 0;
-            padding: 20px;
+            padding: 0;
             box-sizing: border-box;
         }
 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-primary);
+        }
+
         .main-container {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            max-width: 900px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
-        .container {
-            background-color: #fff;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            max-width: 400px;
-            width: 100%;
-            margin-right: 20px;
-        }
-
-        .results-container {
-            background-color: #fff;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            max-width: 400px;
-            width: 100%;
+        .container, .results-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         h1 {
-            font-size: 24px;
-            color: #333;
-            margin-bottom: 20px;
+            font-size: 28px;
+            color: var(--text-primary);
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: 600;
+            background: var(--bg-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-primary);
+            font-size: 14px;
         }
 
         input[type="text"], select {
-            width: calc(100% - 20px);
-            padding: 10px;
-            margin-bottom: 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
             font-size: 16px;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 30px;
         }
 
         button {
-            width: calc(100% - 20px);
-            padding: 12px;
-            margin: 10px 0;
+            padding: 15px 25px;
             border: none;
-            border-radius: 5px;
-            font-size: 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
             cursor: pointer;
-            background-color: #4CAF50;
-            color: white;
-            transition: background-color 0.3s ease;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        button:hover {
-            background-color: #45a049;
+        .btn-primary {
+            background: var(--bg-gradient);
+            color: white;
+            grid-column: span 2;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #fff;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning-color);
+            color: white;
         }
 
         .result {
-            margin-top: 20px;
-            font-size: 18px;
-            color: #333;
-            background-color: #f9f9f9;
-            padding: 15px;
-            border-radius: 5px;
-            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 16px;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-left: 4px solid var(--primary-color);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
         }
 
-        .footer {
-            margin-top: 20px;
-            font-size: 14px;
-            color: #777;
+        .result h3 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .status-card {
+            background: #fff;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid var(--success-color);
+        }
+
+        .status-card.working {
+            border-left-color: var(--warning-color);
+        }
+
+        .status-card.off-work {
+            border-left-color: var(--success-color);
+        }
+
+        .status-card.no-record {
+            border-left-color: var(--danger-color);
         }
 
         .time-info {
-            margin-top: 10px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .time-card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .time-card .label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .time-card .value {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 14px;
+            color: var(--text-secondary);
+            opacity: 0.8;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 0 10px;
+            }
+            
+            .container, .results-container {
+                padding: 25px;
+            }
+            
+            .button-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn-primary {
+                grid-column: span 1;
+            }
+        }
+
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .container, .results-container {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        /* 加载状态 */
+        .loading {
+            position: relative;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid var(--primary-color);
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
 <div class="main-container">
     <div class="container">
-        <h1>工作时间小助手</h1>
-        <select id="deviceSelect" onchange="handleDeviceChange()">
-            <option value="宝">宝</option>
-            <option value="胖">胖</option>
-            <option value="custom">自定义</option>
-        </select>
-        <input type="text" id="customDeviceInput" placeholder="设备名称" style="display:none;">
-        <select id="tagSelect">
-            <option value="签到">签到</option>
-            <option value="下班">下班</option>
-            <option value="午休">午休</option>
-            <option value="外出">外出</option>
-            <option value="会议">会议</option>
-            <option value="培训">培训</option>
-        </select>
-        <button onclick="saveCurrentTime()">记录当前时间</button>
-        <button onclick="queryDeviceTimes()">查询设备时间</button>
-        <button onclick="queryTodayFirst()">今天已经工作了</button>
-        <button onclick="queryByTag()">按标记查询</button>
-        <button onclick="queryDailyWorkHours()">查询工作时间</button>
-        <button onclick="navigateToEditPage()">编辑页面</button>
+        <h1>🕐 工作时间小助手</h1>
+        
+        <div class="form-group">
+            <label for="deviceSelect">选择设备</label>
+            <select id="deviceSelect" onchange="handleDeviceChange()">
+                <option value="宝">🌟 宝</option>
+                <option value="胖">💼 胖</option>
+                <option value="custom">✏️ 自定义</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <input type="text" id="customDeviceInput" placeholder="请输入设备名称..." style="display:none;">
+        </div>
+        
+        <div class="form-group">
+            <label for="tagSelect">选择标记</label>
+            <select id="tagSelect">
+                <option value="签到">✅ 签到</option>
+                <option value="下班">🏠 下班</option>
+                <option value="午休">😴 午休</option>
+                <option value="外出">🚶 外出</option>
+                <option value="会议">👥 会议</option>
+                <option value="培训">📚 培训</option>
+            </select>
+        </div>
+        
+        <div class="button-grid">
+            <button class="btn-primary" onclick="saveCurrentTime()">📍 记录当前时间</button>
+            <button class="btn-secondary" onclick="queryDeviceTimes()">📊 查询设备时间</button>
+            <button class="btn-secondary" onclick="queryTodayFirst()">⏰ 今天工作时长</button>
+            <button class="btn-secondary" onclick="queryByTag()">🔍 按标记查询</button>
+            <button class="btn-success" onclick="queryDailyWorkHours()">📈 查询工作时间</button>
+            <button class="btn-warning" onclick="navigateToEditPage()">✏️ 编辑页面</button>
+        </div>
+        
         <div class="result" id="result"></div>
-        <div class="footer">© 2024 胖爱</div>
+        <div class="footer">© 2024 胖爱 | 工作时间追踪助手</div>
     </div>
+    
     <div class="results-container">
-        <div class="result" id="resultBao"></div>
-        <div class="result" id="resultPan"></div>
+        <h1>📋 实时状态</h1>
+        <div class="status-card" id="resultBao">
+            <div class="loading">加载中...</div>
+        </div>
+        <div class="status-card" id="resultPan">
+            <div class="loading">加载中...</div>
+        </div>
+        
         <div class="time-info">
-            <p id="currentTime"></p>
-            <p id="targetTime"></p>
-            <p id="countdown"></p>
+            <div class="time-card" style="grid-column: span 2;">
+                <div class="label">🕐 当前时间</div>
+                <div class="value" id="currentTime">--:--:--</div>
+            </div>
         </div>
     </div>
 </div>
@@ -137,13 +334,187 @@
 <script>
     let firstTimestamp = null;
 
+    // 显示当前时间
+    function updateCurrentTime() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('zh-CN', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+        const currentTimeElement = document.getElementById('currentTime');
+        if (currentTimeElement) {
+            currentTimeElement.textContent = timeString;
+        }
+        
+        // 更新倒计时
+        updateCountdown(now);
+    }
+
+    // 更新倒计时功能 - 支持多设备
+    function updateCountdown(now = new Date()) {
+        // 更新宝的倒计时
+        updateDeviceCountdown('宝', now);
+        // 更新胖的倒计时
+        updateDeviceCountdown('胖', now);
+    }
+    
+    // 为指定设备更新倒计时
+    function updateDeviceCountdown(deviceName, now = new Date()) {
+        const countdownElement = document.getElementById(`countdown-${deviceName}`);
+        const targetTimeElement = document.getElementById(`targetTime-${deviceName}`);
+        if (!countdownElement || !targetTimeElement) return;
+        
+        // 检查该设备是否已下班
+        const isDeviceOffWork = window[`isOffWork_${deviceName}`] || false;
+        
+        // 如果已经下班，显示下班状态
+        if (isDeviceOffWork) {
+            countdownElement.textContent = "✅ 已下班";
+            countdownElement.style.color = "var(--success-color)";
+            return;
+        }
+        
+        // 获取计划下班时间字符串
+        const targetTimeStr = targetTimeElement.textContent || '18:00:00';
+        
+        // 解析目标时间
+        let targetTime;
+        if (targetTimeStr.includes('-') || targetTimeStr.includes('/')) {
+            // 完整日期时间格式
+            targetTime = new Date(targetTimeStr);
+        } else {
+            // 只有时间格式，需要智能判断日期
+            const [targetHour, targetMinute, targetSecond] = targetTimeStr.split(':').map(Number);
+            
+            // 先尝试今天的时间
+            const today = new Date(now);
+            targetTime = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 
+                                  targetHour, targetMinute, targetSecond);
+            
+            // 如果目标时间已经过了，那么目标时间应该是明天
+            if (targetTime <= now) {
+                targetTime.setDate(targetTime.getDate() + 1);
+            }
+        }
+        
+        // 计算时间差
+        const timeDiff = targetTime - now;
+        
+        // 如果时间差小于等于0
+        if (timeDiff <= 0) {
+            countdownElement.textContent = "🎉 已到下班时间!";
+            countdownElement.style.color = "var(--success-color)";
+            return;
+        }
+        
+        // 转换为时分秒
+        const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+        const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+        
+        // 格式化显示
+        let countdownString;
+        if (hours >= 24) {
+            const days = Math.floor(hours / 24);
+            const remainingHours = hours % 24;
+            countdownString = `${days}天 ${String(remainingHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        } else {
+            countdownString = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+        
+        countdownElement.textContent = countdownString;
+        
+        // 根据剩余时间设置颜色
+        if (hours < 1) {
+            countdownElement.style.color = "var(--danger-color)";
+        } else if (hours < 2) {
+            countdownElement.style.color = "var(--warning-color)";
+        } else {
+            countdownElement.style.color = "var(--primary-color)";
+        }
+    }
+
+    // 为指定设备设置计划下班时间
+    function setDeviceTargetTime(deviceName, firstTimestamp) {
+        if (!firstTimestamp) {
+            console.log(`❌ setDeviceTargetTime: ${deviceName} 没有首次签到时间`);
+            return;
+        }
+        
+        const firstTime = new Date(firstTimestamp);
+        // 加9小时作为计划下班时间
+        const targetTime = new Date(firstTime.getTime() + 9 * 60 * 60 * 1000);
+        
+        const targetTimeStr = targetTime.toLocaleTimeString('zh-CN', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+        
+        const targetTimeElement = document.getElementById(`targetTime-${deviceName}`);
+        if (targetTimeElement) {
+            targetTimeElement.textContent = targetTimeStr;
+            console.log(`✅ ${deviceName} 计划下班时间已设置为: ${targetTimeStr} (首次签到: ${firstTimestamp})`);
+        } else {
+            console.log(`❌ 找不到元素 targetTime-${deviceName}`);
+        }
+    }
+
+    // 设置计划下班时间（保留原函数用于兼容）
+    function setTargetTime() {
+        const newTime = prompt("请输入计划下班时间 (格式: HH:MM:SS):", "18:00:00");
+        if (newTime && /^\d{2}:\d{2}:\d{2}$/.test(newTime)) {
+            const targetTimeElement = document.getElementById('targetTime');
+            if (targetTimeElement) {
+                targetTimeElement.textContent = newTime;
+                // 立即更新倒计时
+                updateCountdown();
+                showSuccess("计划下班时间已设置为: " + newTime);
+            }
+        } else if (newTime !== null) {
+            showError("时间格式不正确，请使用 HH:MM:SS 格式");
+        }
+    }
+
+    // 设置加载状态
+    function setLoading(elementId, isLoading = true) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            if (isLoading) {
+                element.classList.add('loading');
+                element.innerHTML = '<div>加载中...</div>';
+            } else {
+                element.classList.remove('loading');
+            }
+        }
+    }
+
+    // 显示成功消息
+    function showSuccess(message) {
+        // 可以添加toast通知或其他成功提示
+        console.log('成功:', message);
+    }
+
+    // 显示错误消息
+    function showError(message) {
+        // 可以添加toast通知或其他错误提示
+        console.error('错误:', message);
+        alert(message);
+    }
+
     function handleDeviceChange() {
         const deviceSelect = document.getElementById('deviceSelect');
         const customDeviceInput = document.getElementById('customDeviceInput');
+        const formGroup = customDeviceInput.parentElement;
+        
         if (deviceSelect.value === 'custom') {
-            customDeviceInput.style.display = 'block';
+            formGroup.style.display = 'block';
+            customDeviceInput.focus();
         } else {
-            customDeviceInput.style.display = 'none';
+            formGroup.style.display = 'none';
+            // 当切换设备时，重新设置计划下班时间
+            setTimeout(setDefaultTargetTime, 500);
         }
     }
 
@@ -181,6 +552,8 @@
             .then(data => {
                 resultDiv.innerHTML = `时间记录成功，标记为：${data.tag}`;
                 queryDefaultDevices();
+                // 重新设置计划下班时间
+                setTimeout(setDefaultTargetTime, 500);
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -329,19 +702,100 @@
 
     function queryTodayFirstForDevice(deviceName, resultElementId) {
         const resultDiv = document.getElementById(resultElementId);
+        setLoading(resultElementId, true);
 
-        fetch(`/query_today_first?device_name=${encodeURIComponent(deviceName)}`)
+        fetch(`/query?device_name=${encodeURIComponent(deviceName)}`)
             .then(response => response.json())
             .then(data => {
-                if (data.error) {
-                    resultDiv.innerHTML = `${deviceName} - 尚未记录`;
+                setLoading(resultElementId, false);
+                
+                if (data.error || data.message === 'No records for today') {
+                    resultDiv.className = 'status-card no-record';
+                    resultDiv.innerHTML = `
+                        <h3>📱 ${deviceName}</h3>
+                        <p>🚫 今日尚未签到</p>
+                        <small>等待第一次记录...</small>
+                    `;
                 } else {
-                    resultDiv.innerHTML = `${deviceName} 今天工作了：${data.elapsed_time}<br>首次记录：${data.simple_today_timestamps} (${data.first_tag})`;
+                    // 检查今天的所有记录，判断最后一次记录是否为下班
+                    let isOffWork = false;
+                    let lastTag = data.today_first_tag; // 默认为第一次记录的标记
+                    
+                    // 如果有多个记录，检查最后一次记录
+                    if (data.records && data.records.length > 0) {
+                        // 过滤今天的记录
+                        const today = new Date().toDateString();
+                        const todayRecords = data.records.filter(record => {
+                            const recordDate = new Date(record.timestamp).toDateString();
+                            return recordDate === today;
+                        });
+                        
+                        if (todayRecords.length > 0) {
+                            // 按时间排序获取最后一次记录
+                            todayRecords.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                            lastTag = todayRecords[todayRecords.length - 1].tag;
+                            isOffWork = lastTag === '下班';
+                        }
+                    }
+                    
+                    // 设置该设备的下班状态
+                    window[`isOffWork_${deviceName}`] = isOffWork;
+                    
+                    // 如果已下班，显示特殊状态
+                    const displayTime = isOffWork ? data.elapsed_time : data.elapsed_time;
+                    
+                    resultDiv.className = isOffWork ? 'status-card off-work' : 'status-card working';
+                    resultDiv.innerHTML = `
+                        <h3>📱 ${deviceName}</h3>
+                        <div style="font-size: 24px; font-weight: 600; color: ${isOffWork ? 'var(--success-color)' : 'var(--warning-color)'}; margin: 10px 0;">
+                            已工作: ${displayTime}
+                        </div>
+                        <div style="margin: 15px 0;">
+                            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 5px;">
+                                📍 首次签到: ${data.today_first_timestamp.split(' ')[1]}
+                            </div>
+                            <div style="display: inline-block;">
+                                <span style="background: ${isOffWork ? 'var(--success-color)' : 'var(--warning-color)'}; 
+                                             color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px;">
+                                    ${lastTag}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- 计划下班时间和倒计时 -->
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color);">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px;">
+                                <div>
+                                    <div style="color: var(--text-secondary);">🏠 计划下班</div>
+                                    <div style="font-weight: 600; color: var(--primary-color);" id="targetTime-${deviceName}">18:00:00</div>
+                                </div>
+                                <div>
+                                    <div style="color: var(--text-secondary);">⏳ 距离下班</div>
+                                    <div style="font-weight: 600;" id="countdown-${deviceName}">--:--:--</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <small style="margin-top: 10px; display: block;">${isOffWork ? '✅ 今日工作完成' : '⏰ 正在工作中...'}</small>
+                    `;
+                    
+                    // 在HTML渲染完成后设置计划下班时间
+                    setTimeout(() => {
+                        if (data.today_first_timestamp) {
+                            setDeviceTargetTime(deviceName, data.today_first_timestamp);
+                        }
+                    }, 100);
                 }
             })
             .catch(error => {
+                setLoading(resultElementId, false);
                 console.error('Error:', error);
-                resultDiv.innerHTML = `${deviceName} - 查询失败。`;
+                resultDiv.className = 'status-card no-record';
+                resultDiv.innerHTML = `
+                    <h3>📱 ${deviceName}</h3>
+                    <p>❌ 查询失败</p>
+                    <small>请检查网络连接</small>
+                `;
             });
     }
 
@@ -366,7 +820,89 @@
         resultDiv.innerHTML = `${resultDiv.id.includes('Bao') ? '宝' : '胖'} 今天已经工作了：${hours}小时 ${minutes}分钟 ${seconds}秒`;
     }
 
-    document.addEventListener('DOMContentLoaded', queryDefaultDevices);
+    // 设置默认计划下班时间为第一次签到+9小时（保留用于当前用户选择的设备）
+    function setDefaultTargetTime() {
+        const deviceSelect = document.getElementById('deviceSelect');
+        const currentDevice = deviceSelect.value === 'custom' ? 
+            document.getElementById('customDeviceInput').value : deviceSelect.value;
+        
+        const targetTimeElement = document.getElementById('targetTime');
+        if (!targetTimeElement) return;
+            
+        if (!currentDevice) {
+            // 如果没有选择设备，使用默认值
+            targetTimeElement.textContent = '18:00:00';
+            console.log('未选择设备，使用默认计划下班时间: 18:00:00');
+            return;
+        }
+        
+        fetch(`/query?device_name=${encodeURIComponent(currentDevice)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error || data.message === 'No records for today') {
+                    // 没有今天的记录，使用默认18:00:00
+                    targetTimeElement.textContent = '18:00:00';
+                    console.log(`设备 ${currentDevice} 今天暂无签到记录，使用默认计划下班时间: 18:00:00`);
+                    return;
+                }
+                
+                // 解析第一次签到时间
+                const firstTimestamp = data.today_first_timestamp;
+                if (firstTimestamp) {
+                    const firstTime = new Date(firstTimestamp);
+                    // 加9小时作为计划下班时间
+                    const targetTime = new Date(firstTime.getTime() + 9 * 60 * 60 * 1000);
+                    
+                    const targetTimeStr = targetTime.toLocaleTimeString('zh-CN', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                    });
+                    
+                    targetTimeElement.textContent = targetTimeStr;
+                    console.log(`已自动设置计划下班时间为: ${targetTimeStr} (第一次签到+9小时)`);
+                    console.log(`第一次签到时间: ${firstTime.toLocaleTimeString('zh-CN')}`);
+                } else {
+                    // 如果没有有效的签到时间，使用默认值
+                    targetTimeElement.textContent = '18:00:00';
+                    console.log('无法获取签到时间，使用默认计划下班时间: 18:00:00');
+                }
+            })
+            .catch(error => {
+                console.error('获取签到时间失败:', error);
+                // 失败时使用默认值
+                targetTimeElement.textContent = '18:00:00';
+                console.log('获取签到时间失败，使用默认计划下班时间: 18:00:00');
+            });
+    }
+
+    // 页面加载完成后的初始化
+    document.addEventListener('DOMContentLoaded', function() {
+        // 更新当前时间和倒计时
+        updateCurrentTime();
+        setInterval(updateCurrentTime, 1000);
+        
+        // 查询默认设备状态
+        queryDefaultDevices();
+        
+        // 每30秒自动刷新状态
+        setInterval(queryDefaultDevices, 30000);
+        
+        // 自动设置计划下班时间为第一次签到+9小时，如果没有签到记录则使用默认18:00:00
+        setTimeout(setDefaultTargetTime, 1000); // 延迟1秒等页面完全加载
+        
+        // 监听自定义设备输入框变化
+        const customDeviceInput = document.getElementById('customDeviceInput');
+        customDeviceInput.addEventListener('input', function() {
+            // 输入设备名后重新设置计划下班时间
+            clearTimeout(window.deviceInputTimer);
+            window.deviceInputTimer = setTimeout(() => {
+                setDefaultTargetTime();
+            }, 1000);
+        });
+        
+        console.log('工作时间小助手已初始化 🚀');
+    });
 </script>
 </body>
 </html>

@@ -133,44 +133,43 @@ def query_device():
 
 @app.route('/query_today_first', methods=['GET'])
 def query_today_first():
-    device_name = request.args.get('device_name')
-
+    """查询今天第一次签到时间"""
+    device_name = request.args.get('device_name', '').strip()
     if not device_name:
-        return jsonify({'error': 'Invalid input'}), 400
-
-    # 获取当前日期的起始时间和结束时间
-    current_tz = tz.tzlocal()
-    now = datetime.now(current_tz)
-    today_start = datetime(now.year, now.month, now.day, tzinfo=current_tz)
-
-    # 从 Redis 查询数据
-    raw_records = redis_db.lrange(device_name, 0, -1)
+        return jsonify({'error': 'Device name is required'}), 400
+    
+    today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    today_end = today_start + timedelta(days=1)
+    
+    # 查询今天所有记录
+    today_keys = redis_db.keys(f"time_records:{device_name}:*")
     today_records = []
     
-    for raw_record in raw_records:
-        record = parse_record(raw_record)
-        timestamp_dt = parser.parse(record['timestamp']).astimezone(current_tz)
-        if today_start <= timestamp_dt < today_start + timedelta(days=1):
-            today_records.append((timestamp_dt, record['tag']))
-
+    for key in today_keys:
+        record_data = redis_db.get(key)
+        if record_data:
+            try:
+                record = json.loads(record_data)
+                record_time = datetime.fromisoformat(record['timestamp'])
+                
+                if today_start <= record_time < today_end:
+                    today_records.append(record)
+            except (json.JSONDecodeError, ValueError, KeyError):
+                continue
+    
     if not today_records:
-        return jsonify({'message': 'No records for today'}), 404
-
-    # 获取今天最早的记录
-    first_timestamp, first_tag = min(today_records, key=lambda x: x[0])
-    elapsed_time = now - first_timestamp
-    elapsed_time_str = str(elapsed_time).split('.')[0]  # 去掉微秒部分
-
-    # 返回最早记录的时间和已过时间
-    response = {
-        'first_timestamp': first_timestamp.strftime('%Y-%m-%d %H:%M:%S'),
-        'simple_today_timestamps': first_timestamp.strftime('%H:%M'),
-        'first_tag': first_tag,
-        'elapsed_time': elapsed_time_str,
-    }
-
-    return jsonify(response), 200
-
+        return jsonify({'message': 'No records for today'})
+    
+    # 按时间排序找到第一次记录
+    today_records.sort(key=lambda x: x['timestamp'])
+    first_record = today_records[0]
+    
+    return jsonify({
+        'device_name': device_name,
+        'today_first_timestamp': first_record['timestamp'],
+        'today_first_tag': first_record.get('tag', '签到'),
+        'total_records_today': len(today_records)
+    })
 
 @app.route('/delete', methods=['POST'])
 def delete_device_record():
@@ -525,4 +524,4 @@ def query_daily_work_hours():
     }), 200
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5001)

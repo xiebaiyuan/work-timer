@@ -1,160 +1,379 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>修改设备记录</title>
+    <title>工作记录管理 - 编辑打卡记录</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+        * {
             margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .container {
-            background-color: #fff;
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 300px;
-        }
-        h1 {
-            text-align: center;
             color: #333;
         }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            margin-top: 50px;
+            animation: slideUp 0.8s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            text-align: center;
+            color: #4a5568;
+            font-size: 2rem;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
         label {
             display: block;
-            margin-top: 10px;
-            color: #555;
+            margin-bottom: 8px;
+            color: #4a5568;
+            font-weight: 600;
+            font-size: 14px;
         }
-        select, input, button {
+
+        select, input {
             width: 100%;
-            padding: 10px;
-            margin-top: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            padding: 15px 18px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
         }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .tag-info {
+            display: inline-block;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-top: 5px;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
         button {
-            background-color: #28a745;
-            color: #fff;
+            padding: 15px 25px;
             border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
-        button:hover {
-            background-color: #218838;
+
+        button:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
         }
+
+        button:hover:before {
+            left: 100%;
+        }
+
+        .btn-delete {
+            background: linear-gradient(135deg, #ff6b6b, #ff5252);
+            color: white;
+        }
+
+        .btn-delete:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(255, 107, 107, 0.3);
+        }
+
+        .btn-edit {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-edit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
         #responseMessage {
-            margin-top: 10px;
-            padding: 10px;
+            margin-top: 20px;
+            padding: 15px;
             text-align: center;
-            border-radius: 4px;
+            border-radius: 12px;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
         }
+
+        #responseMessage.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
         .success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+            border: none;
         }
+
         .error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            background: linear-gradient(135deg, #f56565, #e53e3e);
+            color: white;
+            border: none;
         }
+
         #editModal {
             display: none;
             position: fixed;
-            z-index: 1;
+            z-index: 1000;
             left: 0;
             top: 0;
             width: 100%;
             height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.4);
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s ease;
         }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
         #editModalContent {
-            background-color: #fff;
-            margin: 15% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 80%;
-            max-width: 400px;
-            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            margin: 10% auto;
+            padding: 40px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            animation: modalSlideUp 0.4s ease;
+        }
+
+        @keyframes modalSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        #editModal h2 {
             text-align: center;
+            margin-bottom: 25px;
+            color: #4a5568;
+            font-size: 1.5rem;
         }
-        #editModal input, #editModal select {
-            width: calc(100% - 20px);
-            padding: 10px;
-            margin-top: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+
+        #editModal .modal-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 25px;
         }
-        #editModal button {
-            width: calc(45% - 10px);
-            padding: 10px;
-            margin: 10px 5px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
+
         #editModal .confirm {
-            background-color: #28a745;
-            color: #fff;
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
         }
+
+        #editModal .confirm:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(72, 187, 120, 0.3);
+        }
+
         #editModal .cancel {
-            background-color: #dc3545;
-            color: #fff;
+            background: linear-gradient(135deg, #a0aec0, #718096);
+            color: white;
+        }
+
+        #editModal .cancel:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(160, 174, 192, 0.3);
+        }
+
+        .header-nav {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .nav-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin-top: 20px;
+                padding: 25px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+                margin-bottom: 20px;
+            }
+
+            .button-group {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            #editModalContent {
+                margin: 20% auto;
+                padding: 25px;
+            }
+
+            #editModal .modal-buttons {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
         }
     </style>
 </head>
 <body>
+<div class="header-nav">
+    <a href="/" class="nav-link">← 返回主页</a>
+</div>
+
 <div class="container">
-    <h1>删除设备记录</h1>
+    <h1>📝 工作记录管理</h1>
     <form id="deleteForm">
-        <label for="device_select">选择设备:</label>
-        <select id="device_select" name="device_name" required>
-            <option value="">请选择设备</option>
-        </select><br><br>
+        <div class="form-group">
+            <label for="device_select">📱 选择设备:</label>
+            <select id="device_select" name="device_name" required>
+                <option value="">请选择设备</option>
+            </select>
+        </div>
 
-        <label for="timestamp_select">选择时间戳:</label>
-        <select id="timestamp_select" name="timestamp" required>
-            <option value="">请选择时间戳</option>
-        </select><br><br>
+        <div class="form-group">
+            <label for="timestamp_select">⏰ 选择记录:</label>
+            <select id="timestamp_select" name="timestamp" required>
+                <option value="">请选择时间戳</option>
+            </select>
+        </div>
 
-        <label for="tag_info">当前标记:</label>
-        <span id="tag_info">-</span><br><br>
+        <div class="form-group">
+            <label>🏷️ 当前标记:</label>
+            <span id="tag_info" class="tag-info">-</span>
+        </div>
 
-        <button type="submit">删除记录</button>
-        <button type="button" onclick="showEditModal()">修改记录</button>
+        <div class="button-group">
+            <button type="submit" class="btn-delete">🗑️ 删除记录</button>
+            <button type="button" class="btn-edit" onclick="showEditModal()">✏️ 修改记录</button>
+        </div>
     </form>
 
-    <p id="responseMessage"></p>
+    <div id="responseMessage"></div>
 </div>
 
 <div id="editModal">
     <div id="editModalContent">
-        <h2>修改记录</h2>
-        <label for="newTimestamp">新时间:</label>
-        <input type="datetime-local" id="newTimestamp" step="1" required>
-        <br>
-        <label for="newTag">新标记:</label>
-        <select id="newTag" required>
-            <option value="签到">签到</option>
-            <option value="下班">下班</option>
-            <option value="午休">午休</option>
-            <option value="外出">外出</option>
-            <option value="会议">会议</option>
-            <option value="培训">培训</option>
-        </select>
-        <br>
-        <button class="confirm" onclick="updateRecord()">确认</button>
-        <button class="cancel" onclick="closeEditModal()">取消</button>
+        <h2>✏️ 修改记录</h2>
+        <div class="form-group">
+            <label for="newTimestamp">⏰ 新时间:</label>
+            <input type="datetime-local" id="newTimestamp" step="1" required>
+        </div>
+        <div class="form-group">
+            <label for="newTag">🏷️ 新标记:</label>
+            <select id="newTag" required>
+                <option value="签到">🟢 签到</option>
+                <option value="下班">🔴 下班</option>
+                <option value="午休">🟡 午休</option>
+                <option value="外出">🔵 外出</option>
+                <option value="会议">🟣 会议</option>
+                <option value="培训">🟠 培训</option>
+            </select>
+        </div>
+        <div class="modal-buttons">
+            <button class="confirm" onclick="updateRecord()">✅ 确认修改</button>
+            <button class="cancel" onclick="closeEditModal()">❌ 取消</button>
+        </div>
     </div>
 </div>
 
 <script>
     let currentTimestamp = '';
+
+    // 显示响应消息的函数
+    function showMessage(message, isSuccess = true) {
+        const responseMessage = document.getElementById('responseMessage');
+        responseMessage.textContent = message;
+        responseMessage.className = isSuccess ? 'success show' : 'error show';
+        
+        // 3秒后自动隐藏消息
+        setTimeout(() => {
+            responseMessage.classList.remove('show');
+        }, 3000);
+    }
 
     // 从服务器获取设备列表
     fetch('/get_devices')
@@ -167,28 +386,45 @@
                 option.textContent = device;
                 deviceSelect.appendChild(option);
             });
+        })
+        .catch(error => {
+            showMessage('加载设备列表失败: ' + error.message, false);
         });
 
     // 当设备选择变化时，获取对应的时间戳列表
     document.getElementById('device_select').addEventListener('change', function() {
         const deviceName = this.value;
+        const timestampSelect = document.getElementById('timestamp_select');
+        const tagInfo = document.getElementById('tag_info');
+        
         if (deviceName) {
+            // 添加加载动效
+            timestampSelect.style.opacity = '0.5';
+            timestampSelect.innerHTML = '<option value="">加载中...</option>';
+            
             fetch(`/get_timestamps?device_name=${deviceName}`)
                 .then(response => response.json())
                 .then(data => {
-                    const timestampSelect = document.getElementById('timestamp_select');
-                    timestampSelect.innerHTML = '<option value="">请选择时间戳</option>'; // 重置时间戳选项
+                    timestampSelect.innerHTML = '<option value="">请选择时间戳</option>';
                     data.records.forEach(record => {
                         const option = document.createElement('option');
                         option.value = record.raw_record;
                         option.dataset.tag = record.tag;
-                        const localTime = new Date(record.timestamp).toLocaleString();
+                        const localTime = new Date(record.timestamp).toLocaleString('zh-CN');
                         option.textContent = `${localTime} (${record.tag})`;
                         timestampSelect.appendChild(option);
                     });
+                    timestampSelect.style.opacity = '1';
+                })
+                .catch(error => {
+                    timestampSelect.innerHTML = '<option value="">加载失败</option>';
+                    timestampSelect.style.opacity = '1';
+                    showMessage('加载记录失败: ' + error.message, false);
                 });
         } else {
-            document.getElementById('timestamp_select').innerHTML = '<option value="">请选择时间戳</option>';
+            timestampSelect.innerHTML = '<option value="">请选择时间戳</option>';
+            tagInfo.textContent = '-';
+            currentTimestamp = '';
         }
     });
 
@@ -197,14 +433,37 @@
         currentTimestamp = this.value;
         const selectedOption = this.options[this.selectedIndex];
         const tag = selectedOption.dataset.tag || '-';
-        document.getElementById('tag_info').textContent = tag;
+        const tagInfo = document.getElementById('tag_info');
+        tagInfo.textContent = tag;
+        
+        // 添加动效
+        tagInfo.style.transform = 'scale(1.1)';
+        setTimeout(() => {
+            tagInfo.style.transform = 'scale(1)';
+        }, 200);
     });
 
     // 表单提交处理
     document.getElementById('deleteForm').addEventListener('submit', function(event) {
         event.preventDefault();
 
+        if (!currentTimestamp) {
+            showMessage('请选择要删除的记录', false);
+            return;
+        }
+
         const deviceName = document.getElementById('device_select').value;
+        
+        // 确认删除
+        if (!confirm('确定要删除这条记录吗？此操作不可恢复。')) {
+            return;
+        }
+
+        // 禁用按钮，防止重复提交
+        const submitBtn = event.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = '🔄 删除中...';
 
         fetch('/delete', {
             method: 'POST',
@@ -215,18 +474,30 @@
         })
             .then(response => response.json())
             .then(data => {
-                const responseMessage = document.getElementById('responseMessage');
-                responseMessage.textContent = data.message || data.error;
-                responseMessage.className = data.message ? 'success' : 'error';
-                document.getElementById('device_select').dispatchEvent(new Event('change')); // 刷新时间戳列表
+                if (data.message) {
+                    showMessage('✅ ' + data.message, true);
+                    // 刷新时间戳列表
+                    document.getElementById('device_select').dispatchEvent(new Event('change'));
+                } else {
+                    showMessage('❌ ' + (data.error || '删除失败'), false);
+                }
+            })
+            .catch(error => {
+                showMessage('❌ 网络错误: ' + error.message, false);
+            })
+            .finally(() => {
+                // 恢复按钮状态
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
             });
     });
 
     function showEditModal() {
         if (!currentTimestamp) {
-            alert('请选择时间戳');
+            showMessage('请先选择要修改的记录', false);
             return;
         }
+        
         const modal = document.getElementById('editModal');
         const newTimestampInput = document.getElementById('newTimestamp');
         const newTagSelect = document.getElementById('newTag');
@@ -247,6 +518,11 @@
         }
         
         modal.style.display = 'block';
+        
+        // 聚焦到时间输入框
+        setTimeout(() => {
+            newTimestampInput.focus();
+        }, 100);
     }
 
     function closeEditModal() {
@@ -261,11 +537,17 @@
         const newTag = document.getElementById('newTag').value;
 
         if (!newTimestamp) {
-            alert('请选择新的时间戳');
+            showMessage('请选择新的时间', false);
             return;
         }
 
         const newTimestampUTC = new Date(newTimestamp).toISOString();
+        
+        // 禁用确认按钮
+        const confirmBtn = document.querySelector('#editModal .confirm');
+        const originalText = confirmBtn.textContent;
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = '🔄 修改中...';
 
         fetch('/update', {
             method: 'POST',
@@ -281,13 +563,46 @@
         })
             .then(response => response.json())
             .then(data => {
-                const responseMessage = document.getElementById('responseMessage');
-                responseMessage.textContent = data.message || data.error;
-                responseMessage.className = data.message ? 'success' : 'error';
-                closeEditModal();
-                document.getElementById('device_select').dispatchEvent(new Event('change')); // 刷新时间戳列表
+                if (data.message) {
+                    showMessage('✅ ' + data.message, true);
+                    closeEditModal();
+                    // 刷新时间戳列表
+                    document.getElementById('device_select').dispatchEvent(new Event('change'));
+                } else {
+                    showMessage('❌ ' + (data.error || '修改失败'), false);
+                }
+            })
+            .catch(error => {
+                showMessage('❌ 网络错误: ' + error.message, false);
+            })
+            .finally(() => {
+                // 恢复按钮状态
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = originalText;
             });
     }
+
+    // 点击模态框外部关闭
+    document.getElementById('editModal').addEventListener('click', function(event) {
+        if (event.target === this) {
+            closeEditModal();
+        }
+    });
+
+    // 键盘快捷键
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeEditModal();
+        }
+        if (event.key === 'Enter' && document.getElementById('editModal').style.display === 'block') {
+            updateRecord();
+        }
+    });
+
+    // 页面加载完成动效
+    window.addEventListener('load', function() {
+        document.body.style.opacity = '1';
+    });
 </script>
 </body>
 </html>
