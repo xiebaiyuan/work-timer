@@ -118,6 +118,7 @@
         <button onclick="queryDeviceTimes()">查询设备时间</button>
         <button onclick="queryTodayFirst()">今天已经工作了</button>
         <button onclick="queryByTag()">按标记查询</button>
+        <button onclick="queryDailyWorkHours()">查询工作时间</button>
         <button onclick="navigateToEditPage()">编辑页面</button>
         <div class="result" id="result"></div>
         <div class="footer">© 2024 胖爱</div>
@@ -257,11 +258,62 @@
                 if (data.error) {
                     resultDiv.innerHTML = data.error;
                 } else {
-                    let recordsHtml = `设备 ${deviceName} 标记为 "${tag}" 的记录（共${data.total}条）：<br>`;
+                    let recordsHtml = `设备 ${deviceName} 的 "${tag}" 记录 (共${data.total}条)：<br>`;
                     data.records.forEach(record => {
                         recordsHtml += `${record.timestamp} (${record.tag})<br>`;
                     });
                     resultDiv.innerHTML = recordsHtml;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultDiv.innerHTML = '查询失败。';
+            });
+    }
+
+    function queryDailyWorkHours() {
+        const deviceName = getDeviceName();
+        const resultDiv = document.getElementById('result');
+
+        if (!deviceName) {
+            resultDiv.innerHTML = '请输入设备名称。';
+            return;
+        }
+
+        // 查询最近7天的工作时间
+        const endDate = new Date().toISOString().split('T')[0];
+        const startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+        fetch(`/query_daily_work_hours?device_name=${encodeURIComponent(deviceName)}&start_date=${startDate}&end_date=${endDate}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    resultDiv.innerHTML = data.error;
+                } else {
+                    let workHoursHtml = `<h3>${deviceName} 最近7天工作时间：</h3>`;
+                    
+                    if (data.daily_work_hours.length === 0) {
+                        workHoursHtml += '暂无工作记录';
+                    } else {
+                        workHoursHtml += `<div style="font-size: 12px; margin-bottom: 10px;">已完成天数：${data.completed_days}/${data.total_days}</div>`;
+                        
+                        // 按日期倒序显示（最新的在前）
+                        data.daily_work_hours.reverse().forEach(day => {
+                            const statusColor = day.status === '已完成' ? '#28a745' : 
+                                              day.status === '进行中' ? '#ffc107' : '#6c757d';
+                            
+                            workHoursHtml += `
+                                <div style="border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 5px;">
+                                    <div style="font-weight: bold;">${day.date}</div>
+                                    <div>签到: ${day.first_checkin || '未签到'} | 下班: ${day.last_checkout || '未下班'}</div>
+                                    <div>工作时长: ${day.work_duration || '计算中'} (${day.work_hours}小时)</div>
+                                    <div style="color: ${statusColor};">状态: ${day.status} | 记录数: ${day.records_count}</div>
+                                </div>
+                            `;
+                        });
+                    }
+                    
+                    resultDiv.innerHTML = workHoursHtml;
                 }
             })
             .catch(error => {

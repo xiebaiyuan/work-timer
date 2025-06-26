@@ -317,19 +317,30 @@ def get_badge():
         # 如果今天没有记录
         badge_data["message"] = "尚未签到"
         badge_data["color"] = "#1ea54c55"  # 使用提供的浅色
-        badge_data["style"] = "flat-square"  # 使用较深的绿色
+        badge_data["style"] = "flat-square"
     else:
-        # 获取今天最早的记录
-        first_timestamp, first_tag = min(today_records, key=lambda x: x[0])
-        elapsed_time = now - first_timestamp
+        # 按时间排序
+        today_records.sort(key=lambda x: x[0])
         
-        # 格式化为简单的时间格式，包含标记
-        time_message = f"{first_timestamp.strftime('%H:%M')}({first_tag})"
+        # 查找最后一个下班记录
+        last_checkout = None
+        for timestamp_dt, tag in reversed(today_records):
+            if tag == '下班':
+                last_checkout = timestamp_dt
+                break
         
-        # 配置徽章数据
+        if last_checkout:
+            # 如果今天已经下班，显示下班时间
+            time_message = f"于{last_checkout.strftime('%H:%M')}下班"
+            badge_data["color"] = "#28a745"  # 绿色表示已下班
+        else:
+            # 如果还没下班，显示第一次签到时间
+            first_timestamp, first_tag = min(today_records, key=lambda x: x[0])
+            time_message = f"{first_timestamp.strftime('%H:%M')}({first_tag})"
+            badge_data["color"] = "#1ea54c55"  # 原来的颜色
+        
         badge_data["message"] = time_message
-        badge_data["color"] = "#1ea54c55"  # 使用较深的绿色
-        badge_data["style"] = "flat-square"  # 使用较深的绿色
+        badge_data["style"] = "flat-square"
     
     return jsonify(badge_data)
 
@@ -425,6 +436,93 @@ def query_by_tag():
         })
 
     return jsonify({'records': filtered_records, 'total': len(filtered_records)}), 200
+
+
+@app.route('/query_daily_work_hours', methods=['GET'])
+def query_daily_work_hours():
+    """查询每天工作时间"""
+    device_name = request.args.get('device_name')
+    start_date = request.args.get('start_date')  # 可选的开始日期 YYYY-MM-DD
+    end_date = request.args.get('end_date')    # 可选的结束日期 YYYY-MM-DD
+    
+    if not device_name:
+        return jsonify({'error': 'Invalid input'}), 400
+    
+    # 从 Redis 查询数据
+    raw_records = redis_db.lrange(device_name, 0, -1)
+    
+    # 按日期分组记录
+    daily_records = {}
+    current_tz = tz.tzlocal()
+    
+    for raw_record in raw_records:
+        record = parse_record(raw_record)
+        timestamp_dt = parser.parse(record['timestamp']).astimezone(current_tz)
+        date_str = timestamp_dt.strftime('%Y-%m-%d')
+        
+        # 日期过滤
+        if start_date and date_str < start_date:
+            continue
+        if end_date and date_str > end_date:
+            continue
+            
+        if date_str not in daily_records:
+            daily_records[date_str] = []
+        daily_records[date_str].append((timestamp_dt, record['tag']))
+    
+    # 计算每天的工作时间
+    work_hours_data = []
+    
+    for date_str, records in sorted(daily_records.items()):
+        # 按时间排序
+        records.sort(key=lambda x: x[0])
+        
+        # 找到第一个签到记录
+        first_checkin = None
+        for timestamp_dt, tag in records:
+            if tag == '签到':
+                first_checkin = timestamp_dt
+                break
+        
+        # 找到最后一个下班记录
+        last_checkout = None
+        for timestamp_dt, tag in reversed(records):
+            if tag == '下班':
+                last_checkout = timestamp_dt
+                break
+        
+        # 计算工作时间
+        work_duration = None
+        work_hours = 0
+        status = "未完成"
+        
+        if first_checkin and last_checkout:
+            work_duration = last_checkout - first_checkin
+            work_hours = work_duration.total_seconds() / 3600  # 转换为小时
+            status = "已完成"
+        elif first_checkin:
+            # 如果只有签到没有下班，计算到当前时间（仅限今天）
+            now = datetime.now(current_tz)
+            if date_str == now.strftime('%Y-%m-%d'):
+                work_duration = now - first_checkin
+                work_hours = work_duration.total_seconds() / 3600
+                status = "进行中"
+        
+        work_hours_data.append({
+            'date': date_str,
+            'first_checkin': first_checkin.strftime('%H:%M') if first_checkin else None,
+            'last_checkout': last_checkout.strftime('%H:%M') if last_checkout else None,
+            'work_hours': round(work_hours, 2),
+            'work_duration': str(work_duration).split('.')[0] if work_duration else None,
+            'status': status,
+            'records_count': len(records)
+        })
+    
+    return jsonify({
+        'daily_work_hours': work_hours_data,
+        'total_days': len(work_hours_data),
+        'completed_days': len([d for d in work_hours_data if d['status'] == '已完成'])
+    }), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
