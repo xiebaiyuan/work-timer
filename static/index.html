@@ -384,27 +384,31 @@
             // 完整日期时间格式
             targetTime = new Date(targetTimeStr);
         } else {
-            // 只有时间格式，需要智能判断日期
+            // 只有时间格式，使用今天的日期
             const [targetHour, targetMinute, targetSecond] = targetTimeStr.split(':').map(Number);
             
-            // 先尝试今天的时间
+            // 使用今天的时间
             const today = new Date(now);
             targetTime = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 
                                   targetHour, targetMinute, targetSecond);
-            
-            // 如果目标时间已经过了，那么目标时间应该是明天
-            if (targetTime <= now) {
-                targetTime.setDate(targetTime.getDate() + 1);
-            }
         }
         
         // 计算时间差
         const timeDiff = targetTime - now;
         
-        // 如果时间差小于等于0
+        // 如果时间差小于等于0（已过下班时间）
         if (timeDiff <= 0) {
-            countdownElement.textContent = "🎉 已到下班时间!";
-            countdownElement.style.color = "var(--success-color)";
+            const overTime = Math.abs(timeDiff);
+            const overHours = Math.floor(overTime / (1000 * 60 * 60));
+            const overMinutes = Math.floor((overTime % (1000 * 60 * 60)) / (1000 * 60));
+            const overSeconds = Math.floor((overTime % (1000 * 60)) / 1000);
+            
+            if (overHours > 0) {
+                countdownElement.textContent = `⏰ 已超时 ${overHours}:${String(overMinutes).padStart(2, '0')}:${String(overSeconds).padStart(2, '0')}`;
+            } else {
+                countdownElement.textContent = `⏰ 已超时 ${overMinutes}:${String(overSeconds).padStart(2, '0')}`;
+            }
+            countdownElement.style.color = "var(--danger-color)";
             return;
         }
         

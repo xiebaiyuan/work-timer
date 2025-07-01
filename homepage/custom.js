@@ -3,7 +3,7 @@
  ************************************/
 
 // 日志控制变量
-const DEBUG_MODE = false;
+const DEBUG_MODE = true;
 
 // 日志函数
 function log(...args) {
@@ -58,6 +58,12 @@ function syncFromServer() {
         timerData.elapsedAtSync = data.elapsed_time;
         timerData.lastSyncTime = Date.now();
         
+        log('后端返回数据:', {
+          elapsed_time: data.elapsed_time,
+          is_off_work: data.is_off_work,
+          last_timestamp: data.last_timestamp
+        });
+        
         if (timerData.isCheckedOut && data.last_timestamp) {
           // 如果已下班，提取下班时间
           timerData.checkoutTime = new Date(data.last_timestamp).toLocaleTimeString('zh-CN', {
@@ -86,6 +92,41 @@ function syncFromServer() {
     });
 }
 
+// 解析时间字符串为秒数
+function parseTimeString(timeStr) {
+  if (!timeStr) return 0;
+  
+  let totalSeconds = 0;
+  
+  // 处理包含天数的格式，如 "1 day, 2:30:45" 或 "2 days, 1:15:30"
+  if (timeStr.includes('day')) {
+    const parts = timeStr.split(', ');
+    const dayPart = parts[0];
+    const timePart = parts[1];
+    
+    // 提取天数
+    const dayMatch = dayPart.match(/(\d+)\s+days?/);
+    if (dayMatch) {
+      totalSeconds += parseInt(dayMatch[1]) * 24 * 3600;
+    }
+    
+    // 解析时间部分
+    if (timePart && timePart.includes(':')) {
+      const [hours, minutes, seconds] = timePart.split(':').map(Number);
+      totalSeconds += hours * 3600 + minutes * 60 + seconds;
+    }
+  } else if (timeStr.includes(':')) {
+    // 处理普通时间格式，如 "9:38:14"
+    const parts = timeStr.split(':');
+    if (parts.length === 3) {
+      const [hours, minutes, seconds] = parts.map(Number);
+      totalSeconds = hours * 3600 + minutes * 60 + seconds;
+    }
+  }
+  
+  return totalSeconds;
+}
+
 // 计算当前经过的时间
 function calculateCurrentTime() {
   if (!timerData.lastSyncTime || !timerData.elapsedAtSync) {
@@ -98,8 +139,14 @@ function calculateCurrentTime() {
   }
   
   // 解析上次同步时的已计时时间
-  const [hours, minutes, seconds] = timerData.elapsedAtSync.split(':').map(Number);
-  const elapsedSecondsAtSync = hours * 3600 + minutes * 60 + seconds;
+  let elapsedSecondsAtSync;
+  try {
+    elapsedSecondsAtSync = parseTimeString(timerData.elapsedAtSync);
+    log('解析时间:', timerData.elapsedAtSync, '-> 秒数:', elapsedSecondsAtSync);
+  } catch (error) {
+    log('时间解析错误:', error, '原始值:', timerData.elapsedAtSync);
+    return timerData.elapsedAtSync; // 直接返回原始值
+  }
   
   // 计算从同步到现在经过的额外秒数
   const additionalSeconds = Math.floor((Date.now() - timerData.lastSyncTime) / 1000);
