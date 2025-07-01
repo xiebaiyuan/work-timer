@@ -3,7 +3,7 @@
  ************************************/
 
 // 日志控制变量
-const DEBUG_MODE = true;
+const DEBUG_MODE = false;
 
 // 日志函数
 function log(...args) {

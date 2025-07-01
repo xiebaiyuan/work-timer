@@ -285,7 +285,8 @@
         </div>
         
         <div class="form-group">
-            <input type="text" id="customDeviceInput" placeholder="请输入设备名称..." style="display:none;">
+            <input type="text" id="customDeviceInput" placeholder="请输入设备名称..." style="display:none;" 
+                   oninput="handleCustomDeviceInput()" onblur="handleCustomDeviceInput()">
         </div>
         
         <div class="form-group">
@@ -507,6 +508,58 @@
         alert(message);
     }
 
+    // 设备缓存功能
+    function saveDevicePreference(deviceName, isCustom = false, customValue = '') {
+        const preference = {
+            device: deviceName,
+            isCustom: isCustom,
+            customValue: customValue,
+            timestamp: Date.now()
+        };
+        localStorage.setItem('workTimer_devicePreference', JSON.stringify(preference));
+        console.log('设备偏好已保存:', preference);
+    }
+
+    function loadDevicePreference() {
+        try {
+            const saved = localStorage.getItem('workTimer_devicePreference');
+            if (saved) {
+                const preference = JSON.parse(saved);
+                console.log('加载设备偏好:', preference);
+                return preference;
+            }
+        } catch (error) {
+            console.error('加载设备偏好失败:', error);
+        }
+        return null;
+    }
+
+    function applyDevicePreference() {
+        const preference = loadDevicePreference();
+        if (preference) {
+            const deviceSelect = document.getElementById('deviceSelect');
+            const customDeviceInput = document.getElementById('customDeviceInput');
+            
+            if (preference.isCustom && preference.customValue) {
+                // 恢复自定义设备
+                deviceSelect.value = 'custom';
+                customDeviceInput.value = preference.customValue;
+                customDeviceInput.parentElement.style.display = 'block';
+            } else {
+                // 恢复预设设备
+                deviceSelect.value = preference.device;
+                customDeviceInput.parentElement.style.display = 'none';
+            }
+            
+            console.log(`设备偏好已应用: ${preference.isCustom ? preference.customValue : preference.device}`);
+            
+            // 触发设备变更逻辑
+            setTimeout(() => {
+                setDefaultTargetTime();
+            }, 100);
+        }
+    }
+
     function handleDeviceChange() {
         const deviceSelect = document.getElementById('deviceSelect');
         const customDeviceInput = document.getElementById('customDeviceInput');
@@ -515,10 +568,26 @@
         if (deviceSelect.value === 'custom') {
             formGroup.style.display = 'block';
             customDeviceInput.focus();
+            
+            // 如果自定义输入框有内容，保存偏好
+            if (customDeviceInput.value.trim()) {
+                saveDevicePreference(customDeviceInput.value.trim(), true, customDeviceInput.value.trim());
+            }
         } else {
             formGroup.style.display = 'none';
+            // 保存预设设备偏好
+            saveDevicePreference(deviceSelect.value, false);
             // 当切换设备时，重新设置计划下班时间
             setTimeout(setDefaultTargetTime, 500);
+        }
+    }
+
+    // 监听自定义设备输入框的变化
+    function handleCustomDeviceInput() {
+        const customDeviceInput = document.getElementById('customDeviceInput');
+        const deviceName = customDeviceInput.value.trim();
+        if (deviceName) {
+            saveDevicePreference(deviceName, true, deviceName);
         }
     }
 
@@ -870,6 +939,9 @@
 
     // 页面加载完成后的初始化
     document.addEventListener('DOMContentLoaded', function() {
+        // 应用设备偏好设置
+        applyDevicePreference();
+        
         // 更新当前时间和倒计时
         updateCurrentTime();
         setInterval(updateCurrentTime, 1000);

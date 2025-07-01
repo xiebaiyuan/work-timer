@@ -375,6 +375,58 @@
         }, 3000);
     }
 
+    // 设备缓存功能（与主页面共享）
+    function loadDevicePreference() {
+        try {
+            const saved = localStorage.getItem('workTimer_devicePreference');
+            if (saved) {
+                const preference = JSON.parse(saved);
+                console.log('编辑页面加载设备偏好:', preference);
+                return preference;
+            }
+        } catch (error) {
+            console.error('编辑页面加载设备偏好失败:', error);
+        }
+        return null;
+    }
+
+    function applyDevicePreference() {
+        const preference = loadDevicePreference();
+        if (preference) {
+            const deviceSelect = document.getElementById('device_select');
+            
+            // 等待设备列表加载完成后再应用偏好
+            const checkDeviceList = () => {
+                if (deviceSelect.options.length > 1) { // 除了默认选项外还有其他选项
+                    let deviceToSelect = preference.isCustom ? preference.customValue : preference.device;
+                    
+                    // 检查设备是否在列表中
+                    let optionExists = false;
+                    for (let i = 0; i < deviceSelect.options.length; i++) {
+                        if (deviceSelect.options[i].value === deviceToSelect) {
+                            deviceSelect.selectedIndex = i;
+                            optionExists = true;
+                            console.log(`编辑页面设备偏好已应用: ${deviceToSelect}`);
+                            
+                            // 触发change事件以加载对应的时间戳
+                            deviceSelect.dispatchEvent(new Event('change'));
+                            break;
+                        }
+                    }
+                    
+                    if (!optionExists) {
+                        console.log(`设备 "${deviceToSelect}" 在列表中不存在，使用默认设备`);
+                    }
+                } else {
+                    // 设备列表还没加载完成，继续等待
+                    setTimeout(checkDeviceList, 100);
+                }
+            };
+            
+            setTimeout(checkDeviceList, 100);
+        }
+    }
+
     // 从服务器获取设备列表
     fetch('/get_devices')
         .then(response => response.json())
@@ -386,6 +438,9 @@
                 option.textContent = device;
                 deviceSelect.appendChild(option);
             });
+            
+            // 设备列表加载完成后应用设备偏好
+            setTimeout(applyDevicePreference, 50);
         })
         .catch(error => {
             showMessage('加载设备列表失败: ' + error.message, false);
