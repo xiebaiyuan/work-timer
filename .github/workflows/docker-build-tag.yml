@@ -25,12 +25,38 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Extract version from git
-        id: extract_version
+      - name: Extract version and build metadata
+        id: meta
         run: |
-          VERSION=$(git describe --tags --always || git rev-parse --short HEAD)
-          echo "VERSION=${VERSION}"
-          echo ::set-output name=VERSION::$VERSION
+          # 获取当前日期作为版本号的一部分
+          BUILD_DATE=$(date +'%Y%m%d')
+          BUILD_TIME=$(date +'%H%M')
+          
+          # 获取 Git 信息
+          GIT_SHA=$(git rev-parse --short HEAD)
+          GIT_BRANCH=${GITHUB_REF#refs/heads/}
+          
+          # 检查是否有 Git 标签
+          if git describe --tags --exact-match HEAD 2>/dev/null; then
+            # 如果当前 commit 有标签，使用标签作为版本
+            VERSION=$(git describe --tags --exact-match HEAD)
+            echo "Found git tag: $VERSION"
+          else
+            # 如果没有标签，生成语义化版本
+            VERSION="v1.${BUILD_DATE}.${BUILD_TIME}"
+            echo "Generated version: $VERSION"
+          fi
+          
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+          echo "BUILD_DATE=${BUILD_DATE}" >> $GITHUB_OUTPUT
+          echo "GIT_SHA=${GIT_SHA}" >> $GITHUB_OUTPUT
+          echo "GIT_BRANCH=${GIT_BRANCH}" >> $GITHUB_OUTPUT
+          
+          echo "Build metadata:"
+          echo "  Version: $VERSION"
+          echo "  Build Date: $BUILD_DATE"
+          echo "  Git SHA: $GIT_SHA"
+          echo "  Git Branch: $GIT_BRANCH"
 
       - name: Build and push Docker multi-arch image
         uses: docker/build-push-action@v2
@@ -39,8 +65,17 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            xiebaiyuan/work-timer:${{ steps.extract_version.outputs.VERSION }}
+            xiebaiyuan/work-timer:${{ steps.meta.outputs.VERSION }}
             xiebaiyuan/work-timer:latest
+            xiebaiyuan/work-timer:${{ steps.meta.outputs.BUILD_DATE }}
+            xiebaiyuan/work-timer:sha-${{ steps.meta.outputs.GIT_SHA }}
+          labels: |
+            org.opencontainers.image.title=Work Timer
+            org.opencontainers.image.description=A simple work time tracking application
+            org.opencontainers.image.version=${{ steps.meta.outputs.VERSION }}
+            org.opencontainers.image.created=${{ steps.meta.outputs.BUILD_DATE }}
+            org.opencontainers.image.revision=${{ steps.meta.outputs.GIT_SHA }}
+            org.opencontainers.image.source=https://github.com/xiebaiyuan/work-timer
 
       - name: Create GitHub Release
         id: create_release
@@ -48,7 +83,25 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.extract_version.outputs.VERSION }}
-          release_name: Release ${{ steps.extract_version.outputs.VERSION }}
+          tag_name: ${{ steps.meta.outputs.VERSION }}
+          release_name: Work Timer ${{ steps.meta.outputs.VERSION }}
+          body: |
+            ## 🚀 Work Timer Release ${{ steps.meta.outputs.VERSION }}
+            
+            ### 📦 Docker Images
+            - `xiebaiyuan/work-timer:${{ steps.meta.outputs.VERSION }}`
+            - `xiebaiyuan/work-timer:latest`
+            - `xiebaiyuan/work-timer:${{ steps.meta.outputs.BUILD_DATE }}`
+            - `xiebaiyuan/work-timer:sha-${{ steps.meta.outputs.GIT_SHA }}`
+            
+            ### 🔧 Build Information
+            - **Build Date**: ${{ steps.meta.outputs.BUILD_DATE }}
+            - **Git SHA**: ${{ steps.meta.outputs.GIT_SHA }}
+            - **Platforms**: linux/amd64, linux/arm64
+            
+            ### 📖 Usage
+            ```bash
+            docker run -d -p 8000:5000 xiebaiyuan/work-timer:${{ steps.meta.outputs.VERSION }}
+            ```
           draft: false
           prerelease: false
