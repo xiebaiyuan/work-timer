@@ -33,21 +33,44 @@
             color: var(--text-primary);
         }
 
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.1rem;
+        }
+
         .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 30px;
-            max-width: 1200px;
-            margin: 0 auto;
         }
 
-        .container, .results-container {
+        .device-card {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 20px;
-            padding: 40px;
+            padding: 30px;
             box-shadow: var(--card-shadow);
             border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .device-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
         }
 
         h1 {
@@ -717,32 +740,15 @@
                         <small>等待第一次记录...</small>
                     `;
                 } else {
-                    // 检查今天的所有记录，判断最后一次记录是否为下班
-                    let isOffWork = false;
-                    let lastTag = data.today_first_tag; // 默认为第一次记录的标记
-                    
-                    // 如果有多个记录，检查最后一次记录
-                    if (data.records && data.records.length > 0) {
-                        // 过滤今天的记录
-                        const today = new Date().toDateString();
-                        const todayRecords = data.records.filter(record => {
-                            const recordDate = new Date(record.timestamp).toDateString();
-                            return recordDate === today;
-                        });
-                        
-                        if (todayRecords.length > 0) {
-                            // 按时间排序获取最后一次记录
-                            todayRecords.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-                            lastTag = todayRecords[todayRecords.length - 1].tag;
-                            isOffWork = lastTag === '下班';
-                        }
-                    }
+                    // 使用后端返回的下班状态和最后标记
+                    const isOffWork = data.is_off_work || false;
+                    const lastTag = data.last_tag || data.today_first_tag;
                     
                     // 设置该设备的下班状态
                     window[`isOffWork_${deviceName}`] = isOffWork;
                     
-                    // 如果已下班，显示特殊状态
-                    const displayTime = isOffWork ? data.elapsed_time : data.elapsed_time;
+                    // 显示工作时间（后端已经根据下班状态正确计算）
+                    const displayTime = data.elapsed_time;
                     
                     resultDiv.className = isOffWork ? 'status-card off-work' : 'status-card working';
                     resultDiv.innerHTML = `
@@ -760,6 +766,11 @@
                                     ${lastTag}
                                 </span>
                             </div>
+                            ${isOffWork && data.last_timestamp ? `
+                            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">
+                                🏁 下班时间: ${data.last_timestamp.split(' ')[1]}
+                            </div>
+                            ` : ''}
                         </div>
                         
                         <!-- 计划下班时间和倒计时 -->
