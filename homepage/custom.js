@@ -52,57 +52,26 @@ function syncFromServer() {
         timerData.isCheckedOut = false;
         timerData.checkoutTime = null;
         log('服务器返回今天无记录');
-      } else if (data?.records && Array.isArray(data.records)) {
-        // 检查今天的记录中是否有下班标记
-        const todayRecords = data.records.filter(record => {
-          const recordDate = new Date(record.timestamp).toDateString();
-          const todayDate = new Date().toDateString();
-          return recordDate === todayDate;
-        });
+      } else if (data?.elapsed_time) {
+        // 使用后端返回的下班状态
+        timerData.isCheckedOut = data.is_off_work || false;
+        timerData.elapsedAtSync = data.elapsed_time;
+        timerData.lastSyncTime = Date.now();
         
-        // 查找最后一个下班记录
-        let lastCheckout = null;
-        for (let i = todayRecords.length - 1; i >= 0; i--) {
-          if (todayRecords[i].tag === '下班') {
-            lastCheckout = todayRecords[i];
-            break;
-          }
-        }
-        
-        if (lastCheckout) {
-          // 如果找到下班记录，标记为已下班
-          timerData.isCheckedOut = true;
-          timerData.checkoutTime = new Date(lastCheckout.timestamp).toLocaleTimeString('zh-CN', {
+        if (timerData.isCheckedOut && data.last_timestamp) {
+          // 如果已下班，提取下班时间
+          timerData.checkoutTime = new Date(data.last_timestamp).toLocaleTimeString('zh-CN', {
             hour: '2-digit',
             minute: '2-digit'
           });
-          timerData.elapsedAtSync = data.elapsed_time;
-          timerData.lastSyncTime = Date.now();
           log('检测到已下班，时间:', timerData.checkoutTime);
-        } else if (data?.elapsed_time) {
-          // 没有下班记录但有工作时间，继续计时
-          timerData.isCheckedOut = false;
-          timerData.checkoutTime = null;
-          timerData.elapsedAtSync = data.elapsed_time;
-          timerData.lastSyncTime = Date.now();
-          log('服务器数据同步成功，继续计时:', timerData);
         } else {
-          // 其他情况视为没有有效数据
-          timerData.elapsedAtSync = null;
-          timerData.lastSyncTime = null;
-          timerData.isCheckedOut = false;
+          // 未下班，清空下班时间
           timerData.checkoutTime = null;
-          log('服务器返回的数据无效');
+          log('服务器数据同步成功，继续计时:', timerData);
         }
-      } else if (data?.elapsed_time) {
-        // 兼容旧格式，没有records字段的情况
-        timerData.elapsedAtSync = data.elapsed_time;
-        timerData.lastSyncTime = Date.now();
-        timerData.isCheckedOut = false;
-        timerData.checkoutTime = null;
-        log('服务器数据同步成功（旧格式）:', timerData);
       } else {
-        // 其他情况也视为没有有效数据
+        // 其他情况视为没有有效数据
         timerData.elapsedAtSync = null;
         timerData.lastSyncTime = null;
         timerData.isCheckedOut = false;

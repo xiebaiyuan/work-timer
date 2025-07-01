@@ -119,15 +119,31 @@ def query_device():
     if not today_records:
         return jsonify({'records': records, 'message': 'No records for today'}), 200
 
-    first_timestamp, first_tag = min(today_records, key=lambda x: x[0])
-    elapsed_time = now - first_timestamp
+    # 按时间排序获取第一次和最后一次记录
+    today_records.sort(key=lambda x: x[0])
+    first_timestamp, first_tag = today_records[0]
+    last_timestamp, last_tag = today_records[-1]
+    
+    # 检查是否已下班：最后一次记录的标记是"下班"
+    is_off_work = last_tag == '下班'
+    
+    if is_off_work:
+        # 如果已下班，使用下班时间计算工作时长
+        elapsed_time = last_timestamp - first_timestamp
+    else:
+        # 如果还在工作，使用当前时间计算工作时长
+        elapsed_time = now - first_timestamp
+    
     elapsed_time_str = str(elapsed_time).split('.')[0]  # 去掉微秒部分
 
     return jsonify({
         'records': records,
         'today_first_timestamp': first_timestamp.strftime('%Y-%m-%d %H:%M:%S'),
         'today_first_tag': first_tag,
-        'elapsed_time': elapsed_time_str
+        'elapsed_time': elapsed_time_str,
+        'is_off_work': is_off_work,
+        'last_tag': last_tag,
+        'last_timestamp': last_timestamp.strftime('%Y-%m-%d %H:%M:%S') if is_off_work else None
     }), 200
 
 
