@@ -30,7 +30,6 @@ jobs:
         run: |
           # 获取当前日期作为版本号的一部分
           BUILD_DATE=$(date +'%Y%m%d')
-          BUILD_TIME=$(date +'%H%M')
           
           # 获取 Git 信息
           GIT_SHA=$(git rev-parse --short HEAD)
@@ -42,21 +41,34 @@ jobs:
             VERSION=$(git describe --tags --exact-match HEAD)
             echo "Found git tag: $VERSION"
           else
-            # 如果没有标签，生成语义化版本
-            VERSION="v1.${BUILD_DATE}.${BUILD_TIME}"
-            echo "Generated version: $VERSION"
+            # 生成递增的构建序号
+            # 使用 GitHub run number 确保严格递增
+            RUN_NUMBER=${{ github.run_number }}
+            
+            # 也可以基于时间生成，但加入秒数确保唯一性
+            TIMESTAMP=$(date +'%H%M%S')
+            
+            # 方案1: 使用 GitHub run number (推荐)
+            VERSION="v1.${BUILD_DATE}.${RUN_NUMBER}"
+            
+            # 方案2: 使用时间戳到秒 (备选)
+            # VERSION="v1.${BUILD_DATE}.${TIMESTAMP}"
+            
+            echo "Generated version: $VERSION (using run number: $RUN_NUMBER)"
           fi
           
           echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
           echo "BUILD_DATE=${BUILD_DATE}" >> $GITHUB_OUTPUT
           echo "GIT_SHA=${GIT_SHA}" >> $GITHUB_OUTPUT
           echo "GIT_BRANCH=${GIT_BRANCH}" >> $GITHUB_OUTPUT
+          echo "RUN_NUMBER=${{ github.run_number }}" >> $GITHUB_OUTPUT
           
           echo "Build metadata:"
           echo "  Version: $VERSION"
           echo "  Build Date: $BUILD_DATE"
           echo "  Git SHA: $GIT_SHA"
           echo "  Git Branch: $GIT_BRANCH"
+          echo "  Run Number: ${{ github.run_number }}"
 
       - name: Build and push Docker multi-arch image
         uses: docker/build-push-action@v2
@@ -97,7 +109,12 @@ jobs:
             ### 🔧 Build Information
             - **Build Date**: ${{ steps.meta.outputs.BUILD_DATE }}
             - **Git SHA**: ${{ steps.meta.outputs.GIT_SHA }}
+            - **Run Number**: ${{ steps.meta.outputs.RUN_NUMBER }}
             - **Platforms**: linux/amd64, linux/arm64
+            
+            ### 📈 Version Format
+            - **Format**: `v1.{BUILD_DATE}.{RUN_NUMBER}`
+            - **Explanation**: Run number ensures strictly increasing version numbers
             
             ### 📖 Usage
             ```bash
